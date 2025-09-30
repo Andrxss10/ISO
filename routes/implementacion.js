@@ -40,7 +40,7 @@ const upload = multer({
   }
 });
 
-// Obtener lista de plantillas
+// Obtener lista de plantillas 
 router.get('/', isAuthenticated, async (req, res) => {
   try {
     // Obtener plantillas
@@ -69,9 +69,28 @@ router.get('/', isAuthenticated, async (req, res) => {
       });
     });
 
+    // Obtener capacitaciones del usuario
+    const capacitacionesUsuario = await new Promise((resolve, reject) => {
+      db.all(`
+        SELECT * 
+        FROM usuarios_capacitaciones 
+        WHERE usuario_id = ?
+      `, [req.user.id], (err, rows) => {
+        if (err) reject(err);
+        else {
+          const capacitacionesMap = {};
+          rows.forEach(row => {
+            capacitacionesMap[row.plantilla_id] = row;
+          });
+          resolve(capacitacionesMap);
+        }
+      });
+    });
+
     res.render('implementacion', { 
       plantillas, 
       archivosUsuario,
+      capacitacionesUsuario, // 🔹 Lo pasamos a la vista
       user: req.user,
       path
     });
@@ -84,7 +103,8 @@ router.get('/', isAuthenticated, async (req, res) => {
   }
 });
 
-// Descargar plantilla base - VERSIÓN SIMPLIFICADA
+
+// Descargar plantilla base
 router.get('/descargar/:id', isAuthenticated, async (req, res) => {
   try {
     const plantilla = await new Promise((resolve, reject) => {
@@ -119,6 +139,23 @@ router.get('/descargar/:id', isAuthenticated, async (req, res) => {
     console.error('Error al descargar la plantilla:', error);
     req.session.error_msg = 'Error al descargar la plantilla';
     res.redirect('/implementacion');
+  }
+
+  const capacitacion = await new Promise((resolve, reject) => {
+    db.get(
+      `SELECT completado FROM usuarios_capacitaciones 
+      WHERE usuario_id = ? AND plantilla_id = ?`,
+      [req.user.id, plantilla.id],
+      (err, row) => {
+        if (err) reject(err);
+        else resolve(row);
+      }
+    );
+  });
+
+  if (!capacitacion || capacitacion.completado !== 1) {
+    req.session.error_msg = '⚠️ Debes completar la capacitación antes de descargar esta plantilla.';
+    return res.redirect('/implementacion');
   }
 });
 

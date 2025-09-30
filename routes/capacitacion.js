@@ -132,4 +132,53 @@ router.get('/ver-archivo/:id', isAuthenticated, async (req, res) => {
   }
 });
 
+// Marcar capacitación como completada
+router.post('/capacitacion/completar/:id', isAuthenticated, (req, res) => {
+  const usuarioId = req.user.id;
+  const plantillaId = req.params.id;
+
+  // Verificar si ya existe un registro
+  db.get(
+    `SELECT * FROM usuarios_capacitaciones WHERE usuario_id = ? AND plantilla_id = ?`,
+    [usuarioId, plantillaId],
+    (err, row) => {
+      if (err) {
+        console.error(err);
+        return res.json({ success: false });
+      }
+
+      if (row) {
+        // Ya existe → actualizar
+        db.run(
+          `UPDATE usuarios_capacitaciones SET completado = 1, fecha = CURRENT_TIMESTAMP 
+           WHERE usuario_id = ? AND plantilla_id = ?`,
+          [usuarioId, plantillaId],
+          (err2) => {
+            if (err2) {
+              console.error(err2);
+              return res.json({ success: false });
+            }
+            return res.json({ success: true });
+          }
+        );
+      } else {
+        // No existe → insertar
+        db.run(
+          `INSERT INTO usuarios_capacitaciones (usuario_id, plantilla_id, completado) 
+           VALUES (?, ?, 1)`,
+          [usuarioId, plantillaId],
+          (err2) => {
+            if (err2) {
+              console.error(err2);
+              return res.json({ success: false });
+            }
+            return res.json({ success: true });
+          }
+        );
+      }
+    }
+  );
+});
+
+
 module.exports = router;

@@ -35,6 +35,8 @@ app.use(express.json());
 app.use(express.static('public'));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/plantillas', express.static('plantillas'));
+app.use('/videos', express.static(path.join(__dirname, 'public/videos')));
+
 
 // Llamamos las rutas de otherRoutes
 const isoRoutes = require('./routes/isoRoutes');

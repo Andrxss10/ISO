@@ -76,6 +76,7 @@ db.serialize(() => {
       nombre TEXT NOT NULL,
       descripcion TEXT,
       archivo_path TEXT NOT NULL,
+      video_path TEXT,
       contenido_capacitacion TEXT,
       norma TEXT DEFAULT '9001',
       checklist_id INTEGER,
@@ -85,7 +86,7 @@ db.serialize(() => {
   
   // Guardar registro de visualización de video en está tabla
   db.run(`
-    CREATE TABLE usuarios_capacitaciones (
+    CREATE TABLE IF NOT EXISTS usuarios_capacitaciones (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       usuario_id INTEGER NOT NULL,
       plantilla_id INTEGER NOT NULL,
@@ -94,7 +95,6 @@ db.serialize(() => {
       FOREIGN KEY (usuario_id) REFERENCES usuarios(id),
       FOREIGN KEY (plantilla_id) REFERENCES plantillas(id)
     )
-
   `);
 
   // Tabla para los archivos subidos por usuarios (NUEVA)
@@ -152,7 +152,7 @@ db.serialize(() => {
     } else if (row.count === 0) {
       console.log("ℹ️ Insertando datos iniciales en plantillas...");
       const stmt = db.prepare(
-        `INSERT INTO plantillas (clausula, nombre, descripcion, archivo_path, contenido_capacitacion, checklist_id) VALUES (?, ?, ?, ?, ?, ?)`
+        `INSERT INTO plantillas (clausula, nombre, descripcion, archivo_path, video_path, contenido_capacitacion, checklist_id) VALUES (?, ?, ?, ?, ?, ?, ?)`
       );
       
       // Datos completos para las plantillas ISO 9001 (solo las que tienes)
@@ -162,6 +162,7 @@ db.serialize(() => {
             "Alcance del SGC", 
             "Plantilla para definir el alcance del Sistema de Gestión de Calidad",
             "./plantillas/iso9001/4.3.+Plantilla+Alcance+formato.xlsx",
+            "https://youtu.be/GAA-c2cuonc?si=eerZd-4Zy4TzayYN",
             `
             <div class="p-4 border rounded bg-light">
               <h2 class="text-primary mb-3">Alcance del Sistema de Gestión de Calidad</h2>
@@ -379,6 +380,7 @@ db.serialize(() => {
             "Planificación de cambios", 
             "Plantilla para planificar cambios en el SGC",
             "./plantillas/iso9001/6.3.+Planificación+de+los+cambios+formato.xlsx",
+            "videoFondo.mp4",
             `
             <div class="p-4 border rounded bg-light">
               <h2 class="text-primary mb-3">Planificación de los Cambios</h2>

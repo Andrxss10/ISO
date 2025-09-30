@@ -90,14 +90,31 @@
                                     <% } %>
 
                                     <div class="btn-group-sm">
-                                        <a href="/implementacion/descargar/<%= plantilla.id %>" class="btn btn-primary">
-                                            <i class="fas fa-download me-1"></i>Descargar Plantilla
-                                        </a>
-                                        
-                                        <button class="btn btn-outline-primary" type="button" data-bs-toggle="collapse" data-bs-target="#uploadForm<%= plantilla.id %>" aria-expanded="false" aria-controls="uploadForm<%= plantilla.id %>">
+                                        <% if (capacitacionesUsuario[plantilla.id] && capacitacionesUsuario[plantilla.id].completado === 1) { %>
+                                            <!-- ✅ Si completó capacitación -->
+                                            <a href="/implementacion/descargar/<%= plantilla.id %>" 
+                                            class="btn btn-primary">
+                                                <i class="fas fa-download me-1"></i>Descargar Plantilla
+                                            </a>
+                                        <% } else { %>
+                                            <!-- ❌ Si NO completó capacitación -->
+                                            <button type="button" 
+                                                    class="btn btn-secondary" 
+                                                    disabled 
+                                                    data-bs-toggle="tooltip" 
+                                                    data-bs-placement="top" 
+                                                    title="Debes completar la capacitación antes de descargar esta plantilla">
+                                                <i class="fas fa-lock me-1"></i>Descargar Bloqueado
+                                            </button>
+                                        <% } %>
+
+                                        <button class="btn btn-outline-primary" type="button" data-bs-toggle="collapse" 
+                                                data-bs-target="#uploadForm<%= plantilla.id %>" aria-expanded="false" 
+                                                aria-controls="uploadForm<%= plantilla.id %>">
                                             <i class="fas fa-upload me-1"></i>Subir Plantilla Completada
                                         </button>
                                     </div>
+
 
                                     <div class="collapse mt-3" id="uploadForm<%= plantilla.id %>">
                                         <div class="upload-form">
@@ -137,5 +154,15 @@
             }
         });
     </script>
+    <script>
+        // TOOLTIP
+        document.addEventListener('DOMContentLoaded', function () {
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+            tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl)
+            })
+        });
+    </script>
+
 </body>
 </html>
