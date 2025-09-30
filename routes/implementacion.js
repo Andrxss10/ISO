@@ -69,55 +69,99 @@ router.get('/', isAuthenticated, async (req, res) => {
       });
     });
 
+    // Obtener capacitaciones completadas del usuario - NUEVA CONSULTA
+    const capacitacionesUsuario = await new Promise((resolve, reject) => {
+      db.all(`
+        SELECT plantilla_id 
+        FROM usuarios_capacitaciones 
+        WHERE usuario_id = ? AND completado = 1
+      `, [req.user.id], (err, rows) => {
+        if (err) reject(err);
+        else {
+          const capacitacionesMap = {};
+          rows.forEach(row => {
+            capacitacionesMap[row.plantilla_id] = true;
+          });
+          resolve(capacitacionesMap);
+        }
+      });
+    });
+
     res.render('implementacion', { 
       plantillas, 
       archivosUsuario,
+      capacitacionesUsuario, // ← NUEVO PARÁMETRO
       user: req.user,
-      path
+      path,
+      messages: {
+        success_msg: req.flash('success_msg'),
+        error_msg: req.flash('error_msg')
+      }
     });
   } catch (error) {
     console.error('Error al cargar la página de implementación:', error);
-    res.status(500).render('error', { 
-      message: 'Error al cargar la página de implementación',
-      error: error 
-    });
+    req.flash('error_msg', 'Error al cargar la página de implementación');
+    res.redirect('/dashboard');
   }
 });
 
-// Descargar plantilla base - VERSIÓN SIMPLIFICADA
+// Descargar plantilla base - CON VERIFICACIÓN DE CAPACITACIÓN
 router.get('/descargar/:id', isAuthenticated, async (req, res) => {
   try {
+    const plantillaId = req.params.id;
+    
+    // 1. PRIMERO verificar si la capacitación está completada
+    const capacitacion = await new Promise((resolve, reject) => {
+      db.get(
+        `SELECT completado FROM usuarios_capacitaciones 
+        WHERE usuario_id = ? AND plantilla_id = ?`,
+        [req.user.id, plantillaId],
+        (err, row) => {
+          if (err) reject(err);
+          else resolve(row);
+        }
+      );
+    });
+
+    // 2. Validar capacitación - SI NO ESTÁ COMPLETADA, BLOQUEAR DESCARGA
+    if (!capacitacion || capacitacion.completado !== 1) {
+      req.flash('error_msg', '⚠️ Debes completar la capacitación antes de descargar esta plantilla.');
+      return res.redirect('/implementacion');
+    }
+
+    // 3. Si la capacitación está completada, proceder con la descarga
     const plantilla = await new Promise((resolve, reject) => {
-      db.get('SELECT * FROM plantillas WHERE id = ?', [req.params.id], (err, row) => {
+      db.get('SELECT * FROM plantillas WHERE id = ?', [plantillaId], (err, row) => {
         if (err) reject(err);
         else resolve(row);
       });
     });
     
     if (!plantilla) {
-      req.session.error_msg = 'Plantilla no encontrada';
+      req.flash('error_msg', 'Plantilla no encontrada');
       return res.redirect('/implementacion');
     }
+
     const filePath = path.resolve(__dirname, '..', plantilla.archivo_path);
-    const downloadName = `${plantilla.clausula}_${plantilla.nombre}.xlsx`;
+    const downloadName = `${plantilla.clausula}_${plantilla.nombre.replace(/\s+/g, '_')}.xlsx`;
     
     // Verificar si el archivo existe
     if (fs.existsSync(filePath)) {
       res.download(filePath, downloadName, (err) => {
         if (err) {
           console.error('Error al descargar:', err);
-          req.session.error_msg = 'Error al descargar la plantilla';
+          req.flash('error_msg', 'Error al descargar la plantilla');
           res.redirect('/implementacion');
         }
       });
     } else {
       console.error('Archivo no encontrado:', filePath);
-      req.session.error_msg = `Plantilla no disponible. Contacte al administrador.`;
+      req.flash('error_msg', 'Plantilla no disponible. Contacte al administrador.');
       res.redirect('/implementacion');
     }
   } catch (error) {
     console.error('Error al descargar la plantilla:', error);
-    req.session.error_msg = 'Error al descargar la plantilla';
+    req.flash('error_msg', 'Error al descargar la plantilla');
     res.redirect('/implementacion');
   }
 });

@@ -76,6 +76,7 @@ db.serialize(() => {
       nombre TEXT NOT NULL,
       descripcion TEXT,
       archivo_path TEXT NOT NULL,
+      video_path TEXT,
       contenido_capacitacion TEXT,
       norma TEXT DEFAULT '9001',
       checklist_id INTEGER,
@@ -88,10 +89,11 @@ db.serialize(() => {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       usuario_id INTEGER NOT NULL,
       plantilla_id INTEGER NOT NULL,
-      completado INTEGER DEFAULT 0, -- 0 = no completado, 1 = completado
-      fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      completado BOOLEAN DEFAULT 0,
+      fecha_visto TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (usuario_id) REFERENCES usuarios(id),
-      FOREIGN KEY (plantilla_id) REFERENCES plantillas(id)
+      FOREIGN KEY (plantilla_id) REFERENCES plantillas(id),
+      UNIQUE(usuario_id, plantilla_id)
     )
 
   `);
@@ -151,7 +153,7 @@ db.serialize(() => {
     } else if (row.count === 0) {
       console.log("ℹ️ Insertando datos iniciales en plantillas...");
       const stmt = db.prepare(
-        `INSERT INTO plantillas (clausula, nombre, descripcion, archivo_path, contenido_capacitacion, checklist_id) VALUES (?, ?, ?, ?, ?, ?)`
+        `INSERT INTO plantillas (clausula, nombre, descripcion, archivo_path, video_path, contenido_capacitacion, checklist_id) VALUES (?, ?, ?, ?, ?, ?, ?)`
       );
       
       // Datos completos para las plantillas ISO 9001 (solo las que tienes)
@@ -161,6 +163,7 @@ db.serialize(() => {
             "Alcance del SGC", 
             "Plantilla para definir el alcance del Sistema de Gestión de Calidad",
             "./plantillas/iso9001/4.3.+Plantilla+Alcance+formato.xlsx",
+            "videoFondo.mp4",
             `
             <div class="p-4 border rounded bg-light">
               <h2 class="text-primary mb-3">Alcance del Sistema de Gestión de Calidad</h2>
@@ -208,6 +211,7 @@ db.serialize(() => {
             "Procesos del SGC", 
             "Plantilla para documentar los procesos del Sistema de Gestión de Calidad",
             "./plantillas/iso9001/4.4.+Ficha+de+procesos+Formato.xlsx",
+            "videoFondo.mp4",
             `
             <div class="p-4 border rounded bg-light">
               <h2 class="text-primary mb-3">Sistema de Gestión de Calidad y sus Procesos</h2>
@@ -261,6 +265,7 @@ db.serialize(() => {
             "Compromiso de liderazgo", 
             "Plantilla para evidenciar el compromiso de la dirección",
             "./plantillas/iso9001/5.1.+Check+list+Liderazgo+Actual+Formato.xlsx",
+            "videoFondo.mp4",
             `
             <div class="p-4 border rounded bg-light">
               <h2 class="text-primary mb-3">Liderazgo y Compromiso</h2>
@@ -313,6 +318,7 @@ db.serialize(() => {
             "Objetivos de calidad", 
             "Plantilla para establecer objetivos de calidad y planificar su consecución",
             "./plantillas/iso9001/6.2+Objetivos+de+calidad.xlsx",
+            "videoFondo.mp4",
             `
             <div class="p-4 border rounded bg-light">
               <h2 class="text-primary mb-3">Objetivos de la Calidad y Planificación</h2>
@@ -378,6 +384,7 @@ db.serialize(() => {
             "Planificación de cambios", 
             "Plantilla para planificar cambios en el SGC",
             "./plantillas/iso9001/6.3.+Planificación+de+los+cambios+formato.xlsx",
+            "videoFondo.mp4",
             `
             <div class="p-4 border rounded bg-light">
               <h2 class="text-primary mb-3">Planificación de los Cambios</h2>
@@ -441,6 +448,7 @@ db.serialize(() => {
             "Ambiente de procesos", 
             "Plantilla para determinar y gestionar el ambiente para la operación de procesos",
             "./plantillas/iso9001/7.1.4.+Formato+Medición+de+condiciones+físicas.xlsx",
+            "videoFondo.mp4",
             `
             <div class="p-4 border rounded bg-light">
               <h2 class="text-primary mb-3">Ambiente para la Operación de Procesos</h2>
@@ -506,6 +514,7 @@ db.serialize(() => {
             "Conocimientos organizacionales", 
             "Plantilla para gestionar los conocimientos de la organización",
             "./plantillas/iso9001/7.1.6.+Formato-Conocimientos+de+la+organización.xlsx",
+            "videoFondo.mp4",
             `
             <div class="p-4 border rounded bg-light">
               <h2 class="text-primary mb-3">Conocimientos de la Organización</h2>
@@ -564,6 +573,7 @@ db.serialize(() => {
             "Competencia", 
             "Plantilla para determinar y gestionar la competencia del personal",
             "./plantillas/iso9001/7.2.+Formato-+Competencia.xlsx",
+            "videoFondo.mp4",
             `
             <div class="p-4 border rounded bg-light">
               <h2 class="text-primary mb-3">Competencia</h2>
@@ -635,6 +645,7 @@ db.serialize(() => {
             "Toma de conciencia", 
             "Plantilla para asegurar que el personal es consciente de la política y objetivos de calidad",
             "./plantillas/iso9001/7.3.+Formato++-+Toma+de+conciencia.xlsx",
+            "videoFondo.mp4",
             `
             <div class="p-4 border rounded bg-light">
               <h2 class="text-primary mb-3">Toma de Conciencia</h2>
@@ -695,6 +706,7 @@ db.serialize(() => {
             "Información documentada", 
             "Plantilla para controlar la información documentada del SGC",
             "./plantillas/iso9001/7.5.+Formato+-+Información+documentada.xlsx",
+            "videoFondo.mp4",
             `
             <div class="p-4 border rounded bg-light">
               <h2 class="text-primary mb-3">Información Documentada</h2>
@@ -764,6 +776,7 @@ db.serialize(() => {
             "Planificación operacional", 
             "Plantilla para planificar y controlar las operaciones",
             "./plantillas/iso9001/8.1.+Planificación+y+control+operacional.xlsx",
+            "videoFondo.mp4",
             `
             <div class="p-4 border rounded bg-light">
               <h2 class="text-primary mb-3">Planificación y Control Operacional</h2>
@@ -832,6 +845,7 @@ db.serialize(() => {
             "Requisitos de productos y servicios", 
             "Plantilla para determinar requisitos de productos y servicios",
             "./plantillas/iso9001/8.2.+Requisitos+para+los+productos+y+servicios+-+Formato.xlsx",
+            "videoFondo.mp4",
             `
             <div class="p-4 border rounded bg-light">
               <h2 class="text-primary mb-3">Requisitos para los Productos y Servicios</h2>
@@ -896,6 +910,7 @@ db.serialize(() => {
             "Control de procesos externos", 
             "Plantilla para controlar procesos, productos y servicios suministrados externamente",
             "./plantillas/iso9001/8.4+Control+de+los+procesos+externos.xlsx",
+            "videoFondo.mp4",
             `
             <div class="p-4 border rounded bg-light">
               <h2 class="text-primary mb-3">Control de los Procesos, Productos y Servicios Suministrados Externaente</h2>
@@ -966,6 +981,7 @@ db.serialize(() => {
             "Identificación y trazabilidad", 
             "Plantilla para gestionar identificación y trazabilidad",
             "./plantillas/iso9001/8.5.2.+Identificación+y+Trazabilidad+-+ADN+Lean.xlsx",
+            "videoFondo.mp4",
             `
             <div class="p-4 border rounded bg-light">
               <h2 class="text-primary mb-3">Identificación y Trazabilidad</h2>
@@ -1050,6 +1066,7 @@ db.serialize(() => {
             "Liberación de productos", 
             "Plantilla para implementar la liberación de productos y servicios",
             "./plantillas/iso9001/8.6.+Liberación+de+los+productos+y+servicios+formato.xlsx",
+            "videoFondo.mp4",
             `
             <div class="p-4 border rounded bg-light">
               <h2 class="text-primary mb-3">Liberación de los Productos y Servicios</h2>
@@ -1127,6 +1144,7 @@ db.serialize(() => {
             "Control de no conformidades", 
             "Plantilla para controlar productos y servicios no conformes",
             "./plantillas/iso9001/8.7.+Control+de+Salidas+no+conformes+Formato.xlsx",
+            "videoFondo.mp4",
             `
             <div class="p-4 border rounded bg-light">
               <h2 class="text-primary mb-3">Control de los Productos y Servicios No Conformes</h2>
@@ -1225,6 +1243,7 @@ db.serialize(() => {
             "Seguimiento y medición", 
             "Plantilla para planificar el seguimiento, medición, análisis y evaluación",
             "./plantillas/iso9001/9.1.+Seguimiento,+medición,+análisis+y+evaluación++-+Formato.xlsx",
+            "videoFondo.mp4",
             `
             <div class="p-4 border rounded bg-light">
               <h2 class="text-primary mb-3">Seguimiento, Medición, Análisis y Evaluación</h2>

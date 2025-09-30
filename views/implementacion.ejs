@@ -48,15 +48,19 @@
                 <h1 class="mb-4">Implementación ISO 9001:2015</h1>
                 <p class="lead">Descarga las plantillas, complétalas y súbelas para tu proceso de implementación.</p>
 
-                <% if (messages.success_msg) { %>
+                <!-- Mensajes de éxito -->
+                <% if (messages && messages.success_msg && typeof messages.success_msg === 'string' && messages.success_msg !== '') { %>
                     <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        <i class="fas fa-check-circle me-2"></i>
                         <%= messages.success_msg %>
                         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                     </div>
                 <% } %>
 
-                <% if (messages.error_msg) { %>
+                <!-- Mensajes de error -->
+                <% if (messages && messages.error_msg && typeof messages.error_msg === 'string' && messages.error_msg !== '') { %>
                     <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
                         <%= messages.error_msg %>
                         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                     </div>
@@ -81,22 +85,49 @@
                                             <h6><i class="fas fa-file-excel text-success me-2"></i>Archivo subido:</h6>
                                             <p class="mb-1">Nombre: <%= path.basename(archivosUsuario[plantilla.id].archivo_path) %></p>
                                             <p class="mb-1">Fecha: <%= new Date(archivosUsuario[plantilla.id].fecha_subida).toLocaleDateString() %></p>
-                                            <form action="/implementacion/eliminar/<%= archivosUsuario[plantilla.id].id %>" method="POST" class="d-inline">
-                                                <button type="submit" class="btn btn-sm btn-outline-danger mt-2" onclick="return confirm('¿Estás seguro de que quieres eliminar este archivo?')">
-                                                    <i class="fas fa-trash me-1"></i>Eliminar
-                                                </button>
-                                            </form>
+                                            
+                                            <!-- Botones ver / descargar archivo subido -->
+                                            <div class="btn-group" role="group">
+                                                <a href="/implementacion/descargar-archivo/<%= archivosUsuario[plantilla.id].id %>" 
+                                                class="btn btn-success btn-sm me-2">
+                                                    <i class="fas fa-eye me-1"></i>Ver
+                                                </a>
+                                                <a href="/implementacion/descargar-archivo/<%= archivosUsuario[plantilla.id].id %>" 
+                                                class="btn btn-primary btn-sm me-2">
+                                                    <i class="fas fa-download me-1"></i>Descargar
+                                                </a>
+                                                <form action="/implementacion/eliminar/<%= archivosUsuario[plantilla.id].id %>" method="POST" class="d-inline">
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('¿Estás seguro de que quieres eliminar este archivo?')">
+                                                        <i class="fas fa-trash me-1"></i>Eliminar
+                                                    </button>
+                                                </form>
+                                            </div>
                                         </div>
                                     <% } %>
 
                                     <div class="btn-group-sm">
-                                        <a href="/implementacion/descargar/<%= plantilla.id %>" class="btn btn-primary">
-                                            <i class="fas fa-download me-1"></i>Descargar Plantilla
-                                        </a>
+                                        <!-- BOTÓN DE DESCARGA CON VERIFICACIÓN -->
+                                        <% if (capacitacionesUsuario && capacitacionesUsuario[plantilla.id]) { %>
+                                            <!-- Usuario VIO el video - Puede descargar -->
+                                            <a href="/implementacion/descargar/<%= plantilla.id %>" class="btn btn-primary">
+                                                <i class="fas fa-download me-1"></i>Descargar Plantilla
+                                            </a>
+                                            <button class="btn btn-outline-primary" type="button" data-bs-toggle="collapse" 
+                                                data-bs-target="#uploadForm<%= plantilla.id %>" aria-expanded="false" 
+                                                aria-controls="uploadForm<%= plantilla.id %>">
+                                                <i class="fas fa-upload me-1"></i>Subir Plantilla Completada
+                                            </button>
+                                        <% } else { %>
+                                            <!-- Usuario NO vio el video - Botón deshabilitado -->
+                                            <button class="btn btn-secondary" disabled title="Debes ver el video de capacitación primero">
+                                                <i class="fas fa-download me-1"></i>Descargar Plantilla
+                                            </button>
+                                            <small class="text-muted ms-2">
+                                                <i class="fas fa-info-circle me-1"></i>
+                                                Ve a <a href="/capacitacion?expanded=<%= plantilla.id %>">Capacitación</a> para ver el video primero
+                                            </small>
+                                        <% } %>
                                         
-                                        <button class="btn btn-outline-primary" type="button" data-bs-toggle="collapse" data-bs-target="#uploadForm<%= plantilla.id %>" aria-expanded="false" aria-controls="uploadForm<%= plantilla.id %>">
-                                            <i class="fas fa-upload me-1"></i>Subir Plantilla Completada
-                                        </button>
                                     </div>
 
                                     <div class="collapse mt-3" id="uploadForm<%= plantilla.id %>">

@@ -16,7 +16,7 @@ router.get('/', isAuthenticated, async (req, res) => {
       });
     });
 
-    // Obtener archivos subidos por el usuario - ACTUALIZAR ESTA CONSULTA
+    // Obtener archivos subidos por el usuario
     const archivosUsuario = await new Promise((resolve, reject) => {
       db.all(`
         SELECT au.id, au.plantilla_id, au.archivo_path, au.fecha_subida 
@@ -34,17 +34,38 @@ router.get('/', isAuthenticated, async (req, res) => {
       });
     });
 
+    // Obtener capacitaciones completadas del usuario - NUEVA CONSULTA
+    const capacitacionesUsuario = await new Promise((resolve, reject) => {
+      db.all(`
+        SELECT plantilla_id 
+        FROM usuarios_capacitaciones 
+        WHERE usuario_id = ? AND completado = 1
+      `, [req.user.id], (err, rows) => {
+        if (err) reject(err);
+        else {
+          const capacitacionesMap = {};
+          rows.forEach(row => {
+            capacitacionesMap[row.plantilla_id] = true;
+          });
+          resolve(capacitacionesMap);
+        }
+      });
+    });
+
     res.render('capacitacion', { 
       plantillas, 
       archivosUsuario,
-      user: req.user 
+      capacitacionesUsuario, // ← NUEVO PARÁMETRO
+      user: req.user,
+      messages: {
+        success_msg: req.flash('success_msg'),
+        error_msg: req.flash('error_msg')
+      }
     });
   } catch (error) {
     console.error('Error al cargar la página de capacitación:', error);
-    res.status(500).render('error', { 
-      message: 'Error al cargar la página de capacitación',
-      error: error 
-    });
+    req.flash('error_msg', 'Error al cargar la página de capacitación');
+    res.redirect('/dashboard');
   }
 });
 
@@ -129,6 +150,63 @@ router.get('/ver-archivo/:id', isAuthenticated, async (req, res) => {
     console.error('Error al visualizar el archivo:', error);
     req.flash('error_msg', 'Error al visualizar el archivo');
     res.redirect('/capacitacion');
+  }
+});
+
+// Marcar video como visto
+router.post('/visto/:id', isAuthenticated, async (req, res) => {
+  try {
+    const usuarioId = req.user.id;
+    const plantillaId = req.params.id;
+
+    console.log(`🎥 Marcando video como visto - Usuario: ${usuarioId}, Plantilla: ${plantillaId}`);
+
+    // Verificar si ya existe un registro
+    const registroExistente = await new Promise((resolve, reject) => {
+      db.get(
+        `SELECT * FROM usuarios_capacitaciones WHERE usuario_id = ? AND plantilla_id = ?`,
+        [usuarioId, plantillaId],
+        (err, row) => {
+          if (err) reject(err);
+          else resolve(row);
+        }
+      );
+    });
+
+    if (registroExistente) {
+      // Ya existe → actualizar
+      await new Promise((resolve, reject) => {
+        db.run(
+          `UPDATE usuarios_capacitaciones SET completado = 1, fecha_visto = CURRENT_TIMESTAMP 
+           WHERE usuario_id = ? AND plantilla_id = ?`,
+          [usuarioId, plantillaId],
+          function(err) {
+            if (err) reject(err);
+            else resolve();
+          }
+        );
+      });
+    } else {
+      // No existe → insertar
+      await new Promise((resolve, reject) => {
+        db.run(
+          `INSERT INTO usuarios_capacitaciones (usuario_id, plantilla_id, completado) 
+           VALUES (?, ?, 1)`,
+          [usuarioId, plantillaId],
+          function(err) {
+            if (err) reject(err);
+            else resolve();
+          }
+        );
+      });
+    }
+
+    console.log(`✅ Video marcado como visto correctamente`);
+    res.json({ success: true });
+
+  } catch (error) {
+    console.error('❌ Error al marcar video como visto:', error);
+    res.json({ success: false, error: 'Error al procesar la solicitud' });
   }
 });
 
