@@ -82,7 +82,8 @@ db.serialize(() => {
       FOREIGN KEY (checklist_id) REFERENCES iso_9001_checklist(id)
     )
   `);
-
+  
+  // Guardar registro de visualización de video en está tabla
   db.run(`
     CREATE TABLE usuarios_capacitaciones (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
