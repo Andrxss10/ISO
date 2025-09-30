@@ -84,7 +84,7 @@ db.serialize(() => {
   `);
 
   db.run(`
-    CREATE TABLE usuarios_capacitaciones (
+    CREATE TABLE IF NOT EXISTS usuarios_capacitaciones (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       usuario_id INTEGER NOT NULL,
       plantilla_id INTEGER NOT NULL,
