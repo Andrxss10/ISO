@@ -69,7 +69,7 @@ router.get('/', isAuthenticated, async (req, res) => {
       });
     });
 
-    // Obtener capacitaciones completadas del usuario - NUEVA CONSULTA
+    // Obtener capacitaciones completadas del usuario
     const capacitacionesUsuario = await new Promise((resolve, reject) => {
       db.all(`
         SELECT plantilla_id 
