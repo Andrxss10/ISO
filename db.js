@@ -76,7 +76,7 @@ db.serialize(() => {
       nombre TEXT NOT NULL,
       descripcion TEXT,
       archivo_path TEXT NOT NULL,
-      video_path TEXT,
+      video_path TEXT DEFAULT 'No hay video subido',
       contenido_capacitacion TEXT,
       norma TEXT DEFAULT '9001',
       checklist_id INTEGER,
@@ -1243,7 +1243,6 @@ db.serialize(() => {
             "Seguimiento y medición", 
             "Plantilla para planificar el seguimiento, medición, análisis y evaluación",
             "./plantillas/iso9001/9.1.+Seguimiento,+medición,+análisis+y+evaluación++-+Formato.xlsx",
-            "videoFondo.mp4",
             `
             <div class="p-4 border rounded bg-light">
               <h2 class="text-primary mb-3">Seguimiento, Medición, Análisis y Evaluación</h2>
