@@ -1462,4 +1462,479 @@ db.serialize(() => {
   });
 });
 
+// Insertar datos iniciales en las plantillas ISO 27001 solo si está vacío
+db.get("SELECT COUNT(*) AS count FROM plantillas_27001", (err, row) => {
+  if (err) {
+    console.error("❌ Error verificando plantillas 27001:", err.message);
+  } else if (row.count === 0) {
+    console.log("ℹ️ Insertando datos iniciales en plantillas_27001...");
+    const stmt = db.prepare(
+      `INSERT INTO plantillas_27001 (clausula, nombre, descripcion, archivo_path, video_path, contenido_capacitacion, checklist_id) VALUES (?, ?, ?, ?, ?, ?, ?)`
+    );
+    
+    // Datos para las plantillas ISO 27001
+    const plantillasData27001 = [
+      [
+        "A.5.1", 
+        "Políticas de Seguridad", 
+        "Plantilla para establecer políticas de seguridad de la información",
+        "./plantillas/iso27001/A.5.1_Politicas_Seguridad.xlsx",
+        "videoSeguridad.mp4",
+        `
+        <div class="p-4 border rounded bg-light">
+          <h2 class="text-primary mb-3">Políticas de Seguridad de la Información</h2>
+
+          <h4 class="text-secondary">Objetivo</h4>
+          <p>
+            Establecer un conjunto de políticas para la seguridad de la información apropiadas para la organización.
+          </p>
+
+          <h5 class="mt-3">Elementos clave</h5>
+          <ul class="list-group mb-3">
+            <li class="list-group-item">
+              <strong>Alineación con objetivos de negocio:</strong> Las políticas deben apoyar los objetivos estratégicos.
+            </li>
+            <li class="list-group-item">
+              <strong>Aprobación por alta dirección:</strong> Requiere compromiso visible de la gerencia.
+            </li>
+            <li class="list-group-item">
+              <strong>Comunicación efectiva:</strong> Todas las partes relevantes deben conocer las políticas.
+            </li>
+          </ul>
+
+          <h5 class="mt-3">Contenido mínimo requerido</h5>
+          <div class="alert alert-info">
+            <ul class="mb-0">
+              <li>Declaración de compromiso de la dirección</li>
+              <li>Alcance y objetivos de seguridad</li>
+              <li>Asignación de responsabilidades</li>
+              <li>Proceso de revisión y actualización</li>
+            </ul>
+          </div>
+        </div>
+        `,
+        1
+      ],
+      [
+        "A.6.1", 
+        "Roles y Responsabilidades", 
+        "Plantilla para definir roles y responsabilidades de seguridad",
+        "./plantillas/iso27001/A.6.1_Roles_Responsabilidades.xlsx",
+        "videoSeguridad.mp4",
+        `
+        <div class="p-4 border rounded bg-light">
+          <h2 class="text-primary mb-3">Roles y Responsabilidades de Seguridad</h2>
+
+          <h4 class="text-secondary">Objetivo</h4>
+          <p>
+            Definir y asignar todas las responsabilidades de seguridad de la información.
+          </p>
+
+          <h5 class="mt-3">Roles principales</h5>
+          <ul class="list-group mb-3">
+            <li class="list-group-item">
+              <strong>Propietario de activos:</strong> Responsable de la protección de activos específicos.
+            </li>
+            <li class="list-group-item">
+              <strong>Administrador de seguridad:</strong> Implementa y mantiene controles.
+            </li>
+            <li class="list-group-item">
+              <strong>Usuario final:</strong> Sigue políticas y procedimientos establecidos.
+            </li>
+          </ul>
+
+          <h5 class="mt-3">Documentación requerida</h5>
+          <div class="alert alert-info">
+            <ul class="mb-0">
+              <li>Matriz de responsabilidades</li>
+              <li>Descripciones de puesto actualizadas</li>
+              <li>Organigrama con roles de seguridad</li>
+            </ul>
+          </div>
+        </div>
+        `,
+        2
+      ],
+      [
+        "A.7.1", 
+        "Verificación de Antecedentes", 
+        "Plantilla para verificación de antecedentes del personal",
+        "./plantillas/iso27001/A.7.1_Verificacion_Antecedentes.xlsx",
+        "videoSeguridad.mp4",
+        `
+        <div class="p-4 border rounded bg-light">
+          <h2 class="text-primary mb-3">Verificación de Antecedentes</h2>
+
+          <h4 class="text-secondary">Objetivo</h4>
+          <p>
+            Verificar antecedentes de candidatos a empleados, contratistas y terceros.
+          </p>
+
+          <h5 class="mt-3">Proceso de verificación</h5>
+          <ul class="list-group mb-3">
+            <li class="list-group-item">
+              <strong>Referencias laborales:</strong> Confirmar experiencia y desempeño previo.
+            </li>
+            <li class="list-group-item">
+              <strong>Verificación académica:</strong> Validar títulos y certificaciones.
+            </li>
+            <li class="list-group-item">
+              <strong>Antecedentes penales:</strong> Cuando sea apropiado y legal.
+            </li>
+          </ul>
+        </div>
+        `,
+        3
+      ],
+      [
+        "A.8.1", 
+        "Inventario de Activos", 
+        "Plantilla para inventario de activos de información",
+        "./plantillas/iso27001/A.8.1_Inventario_Activos.xlsx",
+        "videoSeguridad.mp4",
+        `
+        <div class="p-4 border rounded bg-light">
+          <h2 class="text-primary mb-3">Inventario de Activos de Información</h2>
+
+          <h4 class="text-secondary">Objetivo</h4>
+          <p>
+            Identificar activos de información y definir responsabilidades de protección.
+          </p>
+
+          <h5 class="mt-3">Tipos de activos</h5>
+          <ul class="list-group mb-3">
+            <li class="list-group-item">
+              <strong>Información:</strong> Bases de datos, documentos, archivos.
+            </li>
+            <li class="list-group-item">
+              <strong>Software:</strong> Aplicaciones, sistemas operativos.
+            </li>
+            <li class="list-group-item">
+              <strong>Hardware:</strong> Servidores, equipos, dispositivos.
+            </li>
+          </ul>
+        </div>
+        `,
+        4
+      ],
+      [
+        "A.9.1", 
+        "Control de Accesos", 
+        "Plantilla para política de control de acceso",
+        "./plantillas/iso27001/A.9.1_Control_Accesos.xlsx",
+        "videoSeguridad.mp4",
+        `
+        <div class="p-4 border rounded bg-light">
+          <h2 class="text-primary mb-3">Política de Control de Acceso</h2>
+
+          <h4 class="text-secondary">Objetivo</h4>
+          <p>
+            Limitar el acceso a información y sistemas basado en necesidades de negocio.
+          </p>
+
+          <h5 class="mt-3">Principios clave</h5>
+          <ul class="list-group mb-3">
+            <li class="list-group-item">
+              <strong>Mínimo privilegio:</strong> Solo acceso necesario para funciones.
+            </li>
+            <li class="list-group-item">
+              <strong>Separación de duties:</strong> Prevenir conflictos de interés.
+            </li>
+            <li class="list-group-item">
+              <strong>Revisión periódica:</strong> Actualizar permisos regularmente.
+            </li>
+          </ul>
+        </div>
+        `,
+        5
+      ],
+      [
+        "A.10.1", 
+        "Controles Criptográficos", 
+        "Plantilla para implementación de criptografía",
+        "./plantillas/iso27001/A.10.1_Controles_Criptograficos.xlsx",
+        "videoSeguridad.mp4",
+        `
+        <div class="p-4 border rounded bg-light">
+          <h2 class="text-primary mb-3">Controles Criptográficos</h2>
+
+          <h4 class="text-secondary">Objetivo</h4>
+          <p>
+            Proteger confidencialidad, autenticidad e integridad de la información.
+          </p>
+
+          <h5 class="mt-3">Aplicaciones comunes</h5>
+          <ul class="list-group mb-3">
+            <li class="list-group-item">
+              <strong>Datos en tránsito:</strong> Comunicaciones seguras (TLS/SSL).
+            </li>
+            <li class="list-group-item">
+              <strong>Datos en reposo:</strong> Cifrado de almacenamiento.
+            </li>
+            <li class="list-group-item">
+              <strong>Autenticación:</strong> Contraseñas y certificados digitales.
+            </li>
+          </ul>
+        </div>
+        `,
+        6
+      ],
+      [
+        "A.11.1", 
+        "Seguridad Física", 
+        "Plantilla para protección física de instalaciones",
+        "./plantillas/iso27001/A.11.1_Seguridad_Fisica.xlsx",
+        "videoSeguridad.mp4",
+        `
+        <div class="p-4 border rounded bg-light">
+          <h2 class="text-primary mb-3">Protección Física de Instalaciones</h2>
+
+          <h4 class="text-secondary">Objetivo</h4>
+          <p>
+            Prevenir acceso físico no autorizado a instalaciones y equipos.
+          </p>
+
+          <h5 class="mt-3">Controles físicos</h5>
+          <ul class="list-group mb-3">
+            <li class="list-group-item">
+              <strong>Control de acceso:</strong> Tarjetas, biométricos, guardias.
+            </li>
+            <li class="list-group-item">
+              <strong>Vigilancia:</strong> Cámaras, sistemas de alarma.
+            </li>
+            <li class="list-group-item">
+              <strong>Protección perimetral:</strong> Cercas, barreras físicas.
+            </li>
+          </ul>
+        </div>
+        `,
+        7
+      ],
+      [
+        "A.12.1", 
+        "Procedimientos Operativos", 
+        "Plantilla para procedimientos operativos documentados",
+        "./plantillas/iso27001/A.12.1_Procedimientos_Operativos.xlsx",
+        "videoSeguridad.mp4",
+        `
+        <div class="p-4 border rounded bg-light">
+          <h2 class="text-primary mb-3">Procedimientos Operativos Documentados</h2>
+
+          <h4 class="text-secondary">Objetivo</h4>
+          <p>
+            Asegurar operación correcta y segura de sistemas de información.
+          </p>
+
+          <h5 class="mt-3">Documentación requerida</h5>
+          <ul class="list-group mb-3">
+            <li class="list-group-item">
+              <strong>Procedimientos de operación:</strong> Instrucciones detalladas.
+            </li>
+            <li class="list-group-item">
+              <strong>Gestión de cambios:</strong> Control de modificaciones.
+            </li>
+            <li class="list-group-item">
+              <strong>Respuesta a incidentes:</strong> Protocolos de actuación.
+            </li>
+          </ul>
+        </div>
+        `,
+        8
+      ],
+      [
+        "A.13.1", 
+        "Seguridad de Redes", 
+        "Plantilla para gestión y seguridad de red",
+        "./plantillas/iso27001/A.13.1_Seguridad_Redes.xlsx",
+        "videoSeguridad.mp4",
+        `
+        <div class="p-4 border rounded bg-light">
+          <h2 class="text-primary mb-3">Gestión y Seguridad de la Red</h2>
+
+          <h4 class="text-secondary">Objetivo</h4>
+          <p>
+            Proteger información en redes y su infraestructura de soporte.
+          </p>
+
+          <h5 class="mt-3">Controles de red</h5>
+          <ul class="list-group mb-3">
+            <li class="list-group-item">
+              <strong>Segmentación:</strong> Dividir red por niveles de seguridad.
+            </li>
+            <li class="list-group-item">
+              <strong>Firewalls:</strong> Controlar tráfico entrante/saliente.
+            </li>
+            <li class="list-group-item">
+              <strong>Monitoreo:</strong> Detectar actividades sospechosas.
+            </li>
+          </ul>
+        </div>
+        `,
+        9
+      ],
+      [
+        "A.14.1", 
+        "Requisitos de Seguridad", 
+        "Plantilla para requisitos de seguridad en proyectos",
+        "./plantillas/iso27001/A.14.1_Requisitos_Seguridad.xlsx",
+        "videoSeguridad.mp4",
+        `
+        <div class="p-4 border rounded bg-light">
+          <h2 class="text-primary mb-3">Requisitos de Seguridad en Proyectos</h2>
+
+          <h4 class="text-secondary">Objetivo</h4>
+          <p>
+            Integrar seguridad en el ciclo de vida de desarrollo de sistemas.
+          </p>
+
+          <h5 class="mt-3">Fases del desarrollo</h5>
+          <ul class="list-group mb-3">
+            <li class="list-group-item">
+              <strong>Análisis:</strong> Identificar requisitos de seguridad.
+            </li>
+            <li class="list-group-item">
+              <strong>Diseño:</strong> Incorporar controles desde el inicio.
+            </li>
+            <li class="list-group-item">
+              <strong>Pruebas:</strong> Validar implementación de seguridad.
+            </li>
+          </ul>
+        </div>
+        `,
+        10
+      ],
+      [
+        "A.15.1", 
+        "Acuerdos con Proveedores", 
+        "Plantilla para acuerdos de seguridad con proveedores",
+        "./plantillas/iso27001/A.15.1_Acuerdos_Proveedores.xlsx",
+        "videoSeguridad.mp4",
+        `
+        <div class="p-4 border rounded bg-light">
+          <h2 class="text-primary mb-3">Acuerdos de Seguridad con Proveedores</h2>
+
+          <h4 class="text-secondary">Objetivo</h4>
+          <p>
+            Mantener nivel apropiado de seguridad en servicios externos.
+          </p>
+
+          <h5 class="mt-3">Elementos del acuerdo</h5>
+          <ul class="list-group mb-3">
+            <li class="list-group-item">
+              <strong>Niveles de servicio:</strong> Definir métricas de desempeño.
+            </li>
+            <li class="list-group-item">
+              <strong>Responsabilidades:</strong> Clarificar roles de cada parte.
+            </li>
+            <li class="list-group-item">
+              <strong>Auditorías:</strong> Derecho a verificar cumplimiento.
+            </li>
+          </ul>
+        </div>
+        `,
+        11
+      ],
+      [
+        "A.16.1", 
+        "Gestión de Incidentes", 
+        "Plantilla para gestión de incidentes de seguridad",
+        "./plantillas/iso27001/A.16.1_Gestion_Incidentes.xlsx",
+        "videoSeguridad.mp4",
+        `
+        <div class="p-4 border rounded bg-light">
+          <h2 class="text-primary mb-3">Gestión de Incidentes de Seguridad</h2>
+
+          <h4 class="text-secondary">Objetivo</h4>
+          <p>
+            Garantizar enfoque consistente para manejo de incidentes.
+          </p>
+
+          <h5 class="mt-3">Fases de respuesta</h5>
+          <ul class="list-group mb-3">
+            <li class="list-group-item">
+              <strong>Detección:</strong> Identificar eventos de seguridad.
+            </li>
+            <li class="list-group-item">
+              <strong>Contención:</strong> Limitar impacto del incidente.
+            </li>
+            <li class="list-group-item">
+              <strong>Erradicación:</strong> Eliminar causa raíz.
+            </li>
+          </ul>
+        </div>
+        `,
+        12
+      ],
+      [
+        "A.17.1", 
+        "Continuidad del Negocio", 
+        "Plantilla para planificación de continuidad",
+        "./plantillas/iso27001/A.17.1_Continuidad_Negocio.xlsx",
+        "videoSeguridad.mp4",
+        `
+        <div class="p-4 border rounded bg-light">
+          <h2 class="text-primary mb-3">Planificación de la Continuidad</h2>
+
+          <h4 class="text-secondary">Objetivo</h4>
+          <p>
+            Asegurar continuidad de sistemas de información ante interrupciones.
+          </p>
+
+          <h5 class="mt-3">Componentes del plan</h5>
+          <ul class="list-group mb-3">
+            <li class="list-group-item">
+              <strong>Análisis de impacto:</strong> Evaluar consecuencias.
+            </li>
+            <li class="list-group-item">
+              <strong>Estrategias de recuperación:</strong> Definir acciones.
+            </li>
+            <li class="list-group-item">
+              <strong>Pruebas:</strong> Validar efectividad del plan.
+            </li>
+          </ul>
+        </div>
+        `,
+        13
+      ],
+      [
+        "A.18.1", 
+        "Cumplimiento Legal", 
+        "Plantilla para cumplimiento de requisitos legales",
+        "./plantillas/iso27001/A.18.1_Cumplimiento_Legal.xlsx",
+        "videoSeguridad.mp4",
+        `
+        <div class="p-4 border rounded bg-light">
+          <h2 class="text-primary mb-3">Cumplimiento de Requisitos Legales</h2>
+
+          <h4 class="text-secondary">Objetivo</h4>
+          <p>
+            Evitar incumplimientos de requisitos legales y contractuales.
+          </p>
+
+          <h5 class="mt-3">Áreas regulatorias</h5>
+          <ul class="list-group mb-3">
+            <li class="list-group-item">
+              <strong>Protección de datos:</strong> Leyes de privacidad.
+            </li>
+            <li class="list-group-item">
+              <strong>Propiedad intelectual:</strong> Derechos de autor.
+            </li>
+            <li class="list-group-item">
+              <strong>Evidencia digital:</strong> Requisitos de retención.
+            </li>
+          </ul>
+        </div>
+        `,
+        14
+      ]
+    ];
+    
+    plantillasData27001.forEach((item) => stmt.run(
+      item[0], item[1], item[2], item[3], item[4], item[5], item[6]
+    ));
+    stmt.finalize();
+    console.log("✅ Datos iniciales de plantillas ISO 27001 insertados correctamente");
+  }
+});
+
 module.exports = db;
