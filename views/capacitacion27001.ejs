@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Capacitación - Sistema de Auditorías ISO 27001</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .clausula-card {
+            margin-bottom: 20px;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }
+        .clausula-card:hover {
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .clausula-header {
+            background-color: #f0f8ff;
+            padding: 15px;
+            border-bottom: 1px solid #dee2e6;
+            cursor: pointer;
+        }
+        .clausula-body {
+            padding: 20px;
+        }
+        .contenido-capacitacion {
+            background-color: #f0f8ff;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+        }
+        .archivo-section {
+            background-color: #e6f3ff;
+            padding: 15px;
+            border-radius: 5px;
+        }
+        .btn-capacitacion {
+            margin-top: 10px;
+            margin-right: 10px;
+        }
+        .badge-estado {
+            font-size: 0.8em;
+            padding: 5px 10px;
+            border-radius: 15px;
+        }
+        .header-27001 {
+            background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <%- include('partials/header27001') %>
+
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-12">
+                <div class="header-27001 p-4 rounded mb-4">
+                    <h1 class="mb-2"><i class="fas fa-shield-alt me-2"></i>Capacitación ISO 27001:2022</h1>
+                    <p class="lead mb-0">Aprende sobre cada control de seguridad de la información y visualiza tus plantillas completadas.</p>
+                </div>
+
+                <% if (messages && messages.success_msg && typeof messages.success_msg === 'string' && messages.success_msg !== '') { %>
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        <i class="fas fa-check-circle me-2"></i>
+                        <%= messages.success_msg %>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                <% } %>
+
+                <% if (messages && messages.error_msg && typeof messages.error_msg === 'string' && messages.error_msg !== '') { %>
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <%= messages.error_msg %>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                <% } %>
+
+                <div class="accordion" id="capacitacionAccordion">
+                    <% plantillas.forEach(plantilla => { %>
+                        <div class="card clausula-card">
+                            <div class="card-header clausula-header" id="heading<%= plantilla.id %>" 
+                                 data-bs-toggle="collapse" data-bs-target="#collapse<%= plantilla.id %>" 
+                                 aria-expanded="false" aria-controls="collapse<%= plantilla.id %>">
+                                <h5 class="mb-0 d-flex justify-content-between align-items-center">
+                                    <span>
+                                        <i class="fas fa-chevron-down me-2"></i>
+                                        Control <%= plantilla.clausula %>: <%= plantilla.nombre %>
+                                    </span>
+                                    <% if (archivosUsuario[plantilla.id]) { %>
+                                        <span class="badge bg-success badge-estado">
+                                            <i class="fas fa-check-circle me-1"></i>Completada
+                                        </span>
+                                    <% } else { %>
+                                        <span class="badge bg-warning text-dark badge-estado">
+                                            <i class="fas fa-exclamation-circle me-1"></i>Pendiente
+                                        </span>
+                                    <% } %>
+                                </h5>
+                            </div>
+
+                            <div id="collapse<%= plantilla.id %>" class="collapse" 
+                                 aria-labelledby="heading<%= plantilla.id %>" 
+                                 data-bs-parent="#capacitacionAccordion">
+                                <div class="card-body">
+                                    <!-- Contenido de capacitación -->
+                                    <div class="contenido-capacitacion">
+                                        <h5 class="text-primary">
+                                            <i class="fas fa-graduation-cap me-2"></i>Contenido de Capacitación
+                                        </h5>
+                                        <p class="mb-0"><%- plantilla.contenido_capacitacion %></p>
+                                    </div>
+
+                                    <!-- Sección de video -->
+                                    <div class="video-section mt-4">
+                                        <h5><i class="fas fa-video me-2"></i>Video de capacitación</h5>
+
+                                        <% if (plantilla.video_path) { %>
+                                            <% if (plantilla.video_path.startsWith('http')) { %>
+                                                <!-- Video externo (YouTube, Vimeo, etc.) -->
+                                                <div class="ratio ratio-16x9">
+                                                    <iframe 
+                                                        src="<%= plantilla.video_path %>" 
+                                                        title="Video de capacitación"
+                                                        frameborder="0" 
+                                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                                                        allowfullscreen>
+                                                    </iframe>
+                                                </div>
+                                                <!-- Botón para marcar como visto (para videos externos) -->
+                                                <div class="mt-2">
+                                                    <button class="btn btn-success btn-sm" onclick="marcarVideoVisto('<%= plantilla.id %>')">
+                                                        <i class="fas fa-check me-1"></i>Marcar como Visto
+                                                    </button>
+                                                </div>
+                                            <% } else { %>
+                                                <!-- Video local -->
+                                                <video width="100%" controls id="video-<%= plantilla.id %>">
+                                                    <source src="/videos/<%= plantilla.video_path %>" type="video/mp4">
+                                                    Tu navegador no soporta video.
+                                                </video>
+                                            <% } %>
+                                        <% } else { %>
+                                            <div class="alert alert-info mt-2">
+                                                <i class="fas fa-info-circle me-2"></i>
+                                                No hay video disponible para este control.
+                                            </div>
+                                        <% } %>
+                                    </div>
+
+                                    <!-- Sección de archivos -->
+                                    <div class="archivo-section mt-4">
+                                        <h5 class="text-primary">
+                                            <i class="fas fa-file-excel me-2"></i>Tu plantilla completada
+                                        </h5>
+
+                                        <!-- Archivo del usuario -->
+                                        <div>
+                                            <h6>Tu plantilla completada:</h6>
+                                            <% if (archivosUsuario[plantilla.id]) { %>
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <div>
+                                                        <p class="mb-1">
+                                                            <i class="fas fa-file-excel text-success me-2"></i>
+                                                            Archivo subido el: 
+                                                            <%= new Date(archivosUsuario[plantilla.id].fecha_subida).toLocaleDateString('es-ES', {
+                                                                year: 'numeric',
+                                                                month: 'long',
+                                                                day: 'numeric',
+                                                                hour: '2-digit',
+                                                                minute: '2-digit'
+                                                            }) %>
+                                                        </p>
+                                                    </div>
+                                                    <div>
+                                                        <a href="/capacitacion27001/ver-archivo/<%= archivosUsuario[plantilla.id].id %>" 
+                                                           class="btn btn-success btn-sm me-2">
+                                                            <i class="fas fa-eye me-1"></i>Ver
+                                                        </a>
+                                                        <a href="/capacitacion27001/descargar-archivo/<%= archivosUsuario[plantilla.id].id %>" 
+                                                           class="btn btn-primary btn-sm">
+                                                            <i class="fas fa-download me-1"></i>Descargar
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            <% } else { %>
+                                                <div class="alert alert-info">
+                                                    <i class="fas fa-info-circle me-2"></i>
+                                                    Aún no has subido una plantilla completada para este control. 
+                                                    Visita la sección de <a href="/implementacion27001" class="alert-link">Implementación</a> 
+                                                    para descargar y subir la plantilla.
+                                                </div>
+                                            <% } %>
+                                        </div>
+                                    </div>
+
+                                    <!-- Acciones adicionales -->
+                                    <div class="mt-4">
+                                        <a href="/implementacion27001" class="btn btn-primary">
+                                            <i class="fas fa-arrow-right me-1"></i>Ir a Implementación
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    <% }); %>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <%- include('partials/footer') %>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Función para marcar video como visto
+        async function marcarVideoVisto(plantillaId) {
+            try {
+                const response = await fetch(`/capacitacion27001/visto/${plantillaId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Mostrar mensaje de éxito
+                    alert('✅ Video marcado como visto. Ahora puedes descargar la plantilla.');
+                    
+                    // Actualizar badge si es necesario
+                    const badge = document.querySelector(`#heading${plantillaId} .badge-estado`);
+                    if (badge) {
+                        badge.textContent = 'Video Visto';
+                        badge.className = 'badge bg-info badge-estado';
+                    }
+                    
+                } else {
+                    alert('❌ Error al marcar el video como visto.');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('❌ Error de conexión.');
+            }
+        }
+
+        // Configurar event listeners para videos locales
+        function configurarVideosLocales() {
+            // Para cada video local, agregar event listener
+            const videos = document.querySelectorAll('video[id^="video-"]');
+            videos.forEach(video => {
+                const plantillaId = video.id.replace('video-', '');
+                
+                // Remover event listeners existentes para evitar duplicados
+                video.replaceWith(video.cloneNode(true));
+                const newVideo = document.getElementById(`video-${plantillaId}`);
+                
+                // Agregar nuevo event listener
+                if (newVideo) {
+                    newVideo.addEventListener('ended', function() {
+                        console.log(`🎥 Video ${plantillaId} terminado, marcando como visto...`);
+                        marcarVideoVisto(plantillaId);
+                    });
+                }
+            });
+        }
+
+        // Inicializar cuando el DOM esté listo
+        document.addEventListener('DOMContentLoaded', function() {
+            // Configurar videos locales
+            configurarVideosLocales();
+            
+            // Mantener abierto el acordeón después de acciones
+            const urlParams = new URLSearchParams(window.location.search);
+            const expandedItem = urlParams.get('expanded');
+            if (expandedItem) {
+                const element = document.getElementById('collapse' + expandedItem);
+                if (element) {
+                    new bootstrap.Collapse(element, { toggle: true });
+                }
+            }
+            
+            // Expandir automáticamente el primer elemento si ninguno está expandido
+            const openItems = document.querySelectorAll('.collapse.show');
+            if (openItems.length === 0) {
+                const firstItem = document.querySelector('.clausula-card:first-child .clausula-header');
+                if (firstItem) {
+                    firstItem.click();
+                }
+            }
+        });
+    </script>
+
+</body>
+</html>

@@ -8,7 +8,7 @@
   <script src="https://unpkg.com/lucide@latest"></script>
   <style>
     .iso-27001-bg {
-      background-image: url('https://images.unsplash.com/photo-1563013544-824ae1b704d3?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80');
+      background-image: url('https://images.unsplash.com/photo-1550751827-4bd374c3f58b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1500&q=80');
       background-size: cover;
       background-position: center;
     }
@@ -16,9 +16,25 @@
       max-height: 70vh;
       overflow-y: auto;
     }
+    .btn-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    @media (max-width: 768px) {
+      .btn-group {
+        flex-direction: column;
+      }
+    }
   </style>
 </head>
 <body class="min-h-screen iso-27001-bg">
+  <!-- Botón para regresar a la página principal -->
+  <a href="/IsoSelect" class="fixed top-4 left-4 z-50 flex items-center gap-2 bg-white/90 hover:bg-white px-4 py-2 rounded-lg shadow-md transition-all duration-300 border border-gray-200">
+    <i data-lucide="arrow-left" class="h-5 w-5"></i>
+    <span>Volver al Inicio</span>
+  </a>
+
   <div class="container mx-auto px-4 py-8 flex flex-col justify-center min-h-screen">
     <div class="max-w-4xl mx-auto w-full">
       <div class="bg-white rounded-lg shadow-2xl border-0 overflow-hidden">
@@ -26,18 +42,18 @@
         <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-t-lg p-6">
           <div class="flex items-center gap-3">
             <div class="p-3 rounded-full shadow-md bg-gradient-to-br from-blue-100 to-indigo-100">
-              <i data-lucide="shield-check" class="h-7 w-7 text-blue-600"></i>
+              <i data-lucide="shield" class="h-7 w-7 text-blue-600"></i>
             </div>
             <div>
               <h2 class="text-2xl font-bold text-blue-800">Formulario ISO 27001:2022</h2>
-              <p class="text-gray-600">Complete los datos para registrar la auditoría</p>
+              <p class="text-gray-600">Complete los datos para registrar la auditoría de seguridad de la información</p>
             </div>
           </div>
         </div>
 
         <!-- Contenido del formulario -->
         <div class="p-6 form-container">
-          <form class="space-y-6" onsubmit="handleSubmit(event, '27001')">
+          <form class="space-y-6" method="post" action="/registro-iso-27001">
             <!-- Información básica de la empresa -->
             <div class="border-b border-gray-200 pb-6">
               <h3 class="text-lg font-medium text-gray-900 mb-4 flex items-center gap-2">
@@ -54,7 +70,7 @@
                     type="text"
                     id="razonSocial"
                     name="razonSocial"
-                    placeholder="Ej: Seguridad Informática Ltda."
+                    placeholder="Ej: Tecnologías Innovadoras S.A."
                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     required
                   >
@@ -68,7 +84,7 @@
                     type="text"
                     id="nit"
                     name="nit"
-                    placeholder="Ej: 802.345.678-9"
+                    placeholder="Ej: 901.234.567-8"
                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     required
                   >
@@ -84,7 +100,7 @@
                     type="text"
                     id="representanteLegal"
                     name="representanteLegal"
-                    placeholder="Ej: Ana Rodríguez Pérez"
+                    placeholder="Ej: Carlos Mendoza López"
                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     required
                   >
@@ -104,11 +120,12 @@
                     <option value="tecnologia">Tecnología</option>
                     <option value="financiero">Financiero</option>
                     <option value="salud">Salud</option>
+                    <option value="gobierno">Gobierno</option>
+                    <option value="manufactura">Manufactura</option>
                     <option value="servicios">Servicios</option>
-                    <option value="consultoria">Consultoría</option>
                     <option value="comercio">Comercio</option>
                     <option value="educacion">Educación</option>
-                    <option value="manufactura">Manufactura</option>
+                    <option value="telecomunicaciones">Telecomunicaciones</option>
                     <option value="otros">Otros</option>
                   </select>
                 </div>
@@ -145,7 +162,7 @@
                     type="number"
                     id="numeroEmpleados"
                     name="numeroEmpleados"
-                    placeholder="Ej: 85"
+                    placeholder="Ej: 150"
                     min="1"
                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     required
@@ -169,7 +186,7 @@
                   type="text"
                   id="direccion"
                   name="direccion"
-                  placeholder="Ej: Av. Principal # 67-23, Medellín"
+                  placeholder="Ej: Calle 45 # 26-35, Bogotá D.C."
                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
                 >
@@ -184,7 +201,7 @@
                     type="text"
                     id="telefonos"
                     name="telefonos"
-                    placeholder="Ej: (604) 456 7890 - 310 987 6543"
+                    placeholder="Ej: (601) 345 6789 - 300 123 4567"
                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     required
                   >
@@ -198,7 +215,7 @@
                     type="email"
                     id="email"
                     name="email"
-                    placeholder="Ej: info@seguridad.com"
+                    placeholder="Ej: contacto@empresa.com"
                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     required
                   >
@@ -221,7 +238,7 @@
                   type="url"
                   id="web"
                   name="web"
-                  placeholder="Ej: https://www.seguridad.com"
+                  placeholder="Ej: https://www.empresa.com"
                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
               </div>
@@ -235,7 +252,7 @@
                     type="url"
                     id="facebook"
                     name="facebook"
-                    placeholder="Ej: https://facebook.com/seguridad"
+                    placeholder="Ej: https://facebook.com/empresa"
                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                 </div>
@@ -248,7 +265,7 @@
                     type="url"
                     id="instagram"
                     name="instagram"
-                    placeholder="Ej: https://instagram.com/seguridad"
+                    placeholder="Ej: https://instagram.com/empresa"
                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                 </div>
@@ -261,113 +278,47 @@
                     type="url"
                     id="tiktok"
                     name="tiktok"
-                    placeholder="Ej: https://tiktok.com/@seguridad"
+                    placeholder="Ej: https://tiktok.com/@empresa"
                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                 </div>
               </div>
             </div>
             
-            <!-- Información específica de la auditoría -->
-            <div class="border-t border-gray-200 pt-6">
-              <h3 class="text-lg font-medium text-gray-900 mb-4 flex items-center gap-2">
-                <i data-lucide="clipboard-list" class="h-5 w-5"></i>
-                Información de la Auditoría
-              </h3>
-              
-              <div class="grid md:grid-cols-2 gap-4">
-                <div class="space-y-2">
-                  <label for="projectName" class="block text-sm font-medium text-gray-700">
-                    Nombre del Proyecto
-                  </label>
-                  <input
-                    type="text"
-                    id="projectName"
-                    name="projectName"
-                    placeholder="Ej: Auditoría de Seguridad 2024"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    required
-                  >
-                </div>
+            <!-- Botones de acción -->
+            <div class="pt-6 border-t border-gray-200">
+              <div class="btn-group">
+                <button
+                  type="submit"
+                  class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-md shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center"
+                >
+                  <i data-lucide="shield-check" class="h-5 w-5 mr-2"></i>
+                  Registrar Auditoría
+                </button>
                 
-                <div class="space-y-2">
-                  <label for="auditorName" class="block text-sm font-medium text-gray-700">
-                    Nombre del Auditor
-                  </label>
-                  <input
-                    type="text"
-                    id="auditorName"
-                    name="auditorName"
-                    placeholder="Ej: Javier López Torres"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    required
-                  >
-                </div>
-              </div>
-              
-              <div class="grid md:grid-cols-2 gap-4 mt-4">
-                <div class="space-y-2">
-                  <label for="date" class="block text-sm font-medium text-gray-700">
-                    Fecha de Auditoría
-                  </label>
-                  <input
-                    type="date"
-                    id="date"
-                    name="date"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    required
-                  >
-                </div>
+                <a href="/implementacion27001"
+                  class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 px-4 rounded-md shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center text-center"
+                >
+                  <i data-lucide="file-text" class="h-5 w-5 mr-2"></i>
+                  Ir a Implementación
+                </a>
                 
-                <div class="space-y-2">
-                  <label for="auditType" class="block text-sm font-medium text-gray-700">
-                    Tipo de Auditoría
-                  </label>
-                  <select
-                    id="auditType"
-                    name="auditType"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    required
-                  >
-                    <option value="">Seleccionar tipo</option>
-                    <option value="interna">Auditoría Interna</option>
-                    <option value="externa">Auditoría Externa</option>
-                    <option value="certificacion">Auditoría de Certificación</option>
-                    <option value="seguimiento">Auditoría de Seguimiento</option>
-                  </select>
-                </div>
+                <a href="/capacitacion27001"
+                  class="flex-1 bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-4 rounded-md shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center text-center"
+                >
+                  <i data-lucide="graduation-cap" class="h-5 w-5 mr-2"></i>
+                  Ir a Capacitación
+                </a>
+                
+                <button
+                  type="button"
+                  class="px-4 py-3 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors duration-300 flex items-center justify-center"
+                  onclick="window.location.href='/IsoSelect'"
+                >
+                  <i data-lucide="x" class="h-5 w-5 mr-2"></i>
+                  Cancelar
+                </button>
               </div>
-              
-              <div class="space-y-2 mt-4">
-                <label for="scope" class="block text-sm font-medium text-gray-700">
-                  Alcance de la Auditoría
-                </label>
-                <textarea
-                  id="scope"
-                  name="scope"
-                  placeholder="Ej: Sistemas de información y gestión de accesos"
-                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  rows="3"
-                  required
-                ></textarea>
-              </div>
-            </div>
-
-            <div class="flex gap-3 pt-6">
-              <button
-                type="submit"
-                class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-md shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center"
-              >
-                <i data-lucide="clipboard-list" class="h-5 w-5 mr-2"></i>
-                Registrar Auditoría ISO 27001
-              </button>
-              <button
-                type="button"
-                class="px-4 py-3 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors duration-300"
-                onclick="window.location.href='/IsoSelect'"
-              >
-                Cancelar
-              </button>
             </div>
           </form>
         </div>
@@ -378,20 +329,6 @@
   <script>
     // Inicializar iconos Lucide
     lucide.createIcons();
-    
-    // Función para manejar el envío del formulario
-    function handleSubmit(event, isoType) {
-      event.preventDefault();
-      
-      const formData = new FormData(event.target);
-      const data = Object.fromEntries(formData.entries());
-      
-      console.log("Audit data:", data);
-      alert(`Auditoría ISO ${isoType} registrada exitosamente!`);
-      
-      // Aquí normalmente enviarías los datos a tu backend
-      // Por ejemplo: fetch('/api/audits', { method: 'POST', body: JSON.stringify(data) })
-    }
   </script>
 </body>
 </html>

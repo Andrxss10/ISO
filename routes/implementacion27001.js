@@ -9,8 +9,8 @@ const { isAuthenticated } = require('../middlewares/authMiddleware');
 // Configuración de multer para subir archivos
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    // Crear carpeta por usuario y norma ISO 9001
-    const userUploadDir = path.join(__dirname, '../uploads/iso9001', `usuario_${req.user.id}`);
+    // Crear carpeta por usuario y norma ISO 27001
+    const userUploadDir = path.join(__dirname, '../uploads/iso27001', `usuario_${req.user.id}`);
     if (!fs.existsSync(userUploadDir)) {
       fs.mkdirSync(userUploadDir, { recursive: true });
     }
@@ -20,7 +20,7 @@ const storage = multer.diskStorage({
     // Mantener nombre original pero con prefijo de cláusula
     const plantillaId = req.params.id;
     const timestamp = Date.now();
-    cb(null, `iso9001_clausula_${plantillaId}_${timestamp}_${file.originalname}`);
+    cb(null, `iso27001_clausula_${plantillaId}_${timestamp}_${file.originalname}`);
   }
 });
 
@@ -45,7 +45,7 @@ router.get('/', isAuthenticated, async (req, res) => {
   try {
     // Obtener plantillas
     const plantillas = await new Promise((resolve, reject) => {
-      db.all('SELECT * FROM plantillas WHERE norma = ? ORDER BY clausula', ['9001'], (err, rows) => {
+      db.all('SELECT * FROM plantillas_27001 WHERE norma = ? ORDER BY clausula', ['27001'], (err, rows) => {
         if (err) reject(err);
         else resolve(rows);
       });
@@ -55,7 +55,7 @@ router.get('/', isAuthenticated, async (req, res) => {
     const archivosUsuario = await new Promise((resolve, reject) => {
       db.all(`
         SELECT au.id, au.plantilla_id, au.archivo_path, au.fecha_subida 
-        FROM archivos_usuario au 
+        FROM archivos_usuario_27001 au 
         WHERE au.usuario_id = ?
       `, [req.user.id], (err, rows) => {
         if (err) reject(err);
@@ -73,7 +73,7 @@ router.get('/', isAuthenticated, async (req, res) => {
     const capacitacionesUsuario = await new Promise((resolve, reject) => {
       db.all(`
         SELECT plantilla_id 
-        FROM usuarios_capacitaciones 
+        FROM usuarios_capacitaciones_27001 
         WHERE usuario_id = ? AND completado = 1
       `, [req.user.id], (err, rows) => {
         if (err) reject(err);
@@ -87,7 +87,7 @@ router.get('/', isAuthenticated, async (req, res) => {
       });
     });
 
-    res.render('implementacion', { 
+    res.render('implementacion27001', { 
       plantillas, 
       archivosUsuario,
       capacitacionesUsuario, // ← NUEVO PARÁMETRO
@@ -113,7 +113,7 @@ router.get('/descargar/:id', isAuthenticated, async (req, res) => {
     // 1. PRIMERO verificar si la capacitación está completada
     const capacitacion = await new Promise((resolve, reject) => {
       db.get(
-        `SELECT completado FROM usuarios_capacitaciones 
+        `SELECT completado FROM usuarios_capacitaciones_27001 
         WHERE usuario_id = ? AND plantilla_id = ?`,
         [req.user.id, plantillaId],
         (err, row) => {
@@ -126,12 +126,12 @@ router.get('/descargar/:id', isAuthenticated, async (req, res) => {
     // 2. Validar capacitación - SI NO ESTÁ COMPLETADA, BLOQUEAR DESCARGA
     if (!capacitacion || capacitacion.completado !== 1) {
       req.flash('error_msg', '⚠️ Debes completar la capacitación antes de descargar esta plantilla.');
-      return res.redirect('/implementacion');
+      return res.redirect('/implementacion27001');
     }
 
     // 3. Si la capacitación está completada, proceder con la descarga
     const plantilla = await new Promise((resolve, reject) => {
-      db.get('SELECT * FROM plantillas WHERE id = ?', [plantillaId], (err, row) => {
+      db.get('SELECT * FROM plantillas_27001 WHERE id = ?', [plantillaId], (err, row) => {
         if (err) reject(err);
         else resolve(row);
       });
@@ -139,7 +139,7 @@ router.get('/descargar/:id', isAuthenticated, async (req, res) => {
     
     if (!plantilla) {
       req.flash('error_msg', 'Plantilla no encontrada');
-      return res.redirect('/implementacion');
+      return res.redirect('/implementacion27001');
     }
 
     const filePath = path.resolve(__dirname, '..', plantilla.archivo_path);
@@ -151,18 +151,18 @@ router.get('/descargar/:id', isAuthenticated, async (req, res) => {
         if (err) {
           console.error('Error al descargar:', err);
           req.flash('error_msg', 'Error al descargar la plantilla');
-          res.redirect('/implementacion');
+          res.redirect('/implementacion27001');
         }
       });
     } else {
       console.error('Archivo no encontrado:', filePath);
       req.flash('error_msg', 'Plantilla no disponible. Contacte al administrador.');
-      res.redirect('/implementacion');
+      res.redirect('/implementacion27001');
     }
   } catch (error) {
     console.error('Error al descargar la plantilla:', error);
     req.flash('error_msg', 'Error al descargar la plantilla');
-    res.redirect('/implementacion');
+    res.redirect('/implementacion27001');
   }
 });
 
@@ -171,13 +171,13 @@ router.post('/subir/:id', isAuthenticated, upload.single('archivo'), async (req,
   try {
     if (!req.file) {
       req.flash('error_msg', 'No se ha seleccionado ningún archivo');
-      return res.redirect('/implementacion');
+      return res.redirect('/implementacion27001');
     }
     
     // Verificar si ya existe un archivo subido para esta plantilla por este usuario
     const archivoExistente = await new Promise((resolve, reject) => {
       db.get(
-        'SELECT id FROM archivos_usuario WHERE usuario_id = ? AND plantilla_id = ?',
+        'SELECT id FROM archivos_usuario_27001 WHERE usuario_id = ? AND plantilla_id = ?',
         [req.user.id, req.params.id],
         (err, row) => {
           if (err) reject(err);
@@ -199,7 +199,7 @@ router.post('/subir/:id', isAuthenticated, upload.single('archivo'), async (req,
       // Actualizar archivo existente
       await new Promise((resolve, reject) => {
         db.run(
-          'UPDATE archivos_usuario SET archivo_path = ?, fecha_subida = datetime("now") WHERE id = ?',
+          'UPDATE archivos_usuario_27001 SET archivo_path = ?, fecha_subida = datetime("now") WHERE id = ?',
           [req.file.path, archivoExistente.id],
           function(err) {
             if (err) reject(err);
@@ -211,7 +211,7 @@ router.post('/subir/:id', isAuthenticated, upload.single('archivo'), async (req,
       // Insertar nuevo archivo
       await new Promise((resolve, reject) => {
         db.run(
-          'INSERT INTO archivos_usuario (usuario_id, plantilla_id, archivo_path) VALUES (?, ?, ?)',
+          'INSERT INTO archivos_usuario_27001 (usuario_id, plantilla_id, archivo_path) VALUES (?, ?, ?)',
           [req.user.id, req.params.id, req.file.path],
           function(err) {
             if (err) reject(err);
@@ -222,11 +222,11 @@ router.post('/subir/:id', isAuthenticated, upload.single('archivo'), async (req,
     }
     
     req.flash('success_msg', 'Archivo subido correctamente');
-    res.redirect('/implementacion');
+    res.redirect('/implementacion27001');
   } catch (error) {
     console.error('Error al subir el archivo:', error);
     req.flash('error_msg', 'Error al subir el archivo: ' + error.message);
-    res.redirect('/implementacion');
+    res.redirect('/implementacion27001');
   }
 });
 
@@ -236,7 +236,7 @@ router.post('/eliminar/:id', isAuthenticated, async (req, res) => {
     // Verificar que el archivo pertenece al usuario actual
     const archivo = await new Promise((resolve, reject) => {
       db.get(
-        'SELECT * FROM archivos_usuario WHERE id = ? AND usuario_id = ?',
+        'SELECT * FROM archivos_usuario_27001 WHERE id = ? AND usuario_id = ?',
         [req.params.id, req.user.id],
         (err, row) => {
           if (err) reject(err);
@@ -247,7 +247,7 @@ router.post('/eliminar/:id', isAuthenticated, async (req, res) => {
     
     if (!archivo) {
       req.flash('error_msg', 'Archivo no encontrado');
-      return res.redirect('/implementacion');
+      return res.redirect('/implementacion27001');
     }
     
     // Eliminar el archivo físico
@@ -262,7 +262,7 @@ router.post('/eliminar/:id', isAuthenticated, async (req, res) => {
     // Eliminar el registro de la base de datos
     await new Promise((resolve, reject) => {
       db.run(
-        'DELETE FROM archivos_usuario WHERE id = ?',
+        'DELETE FROM archivos_usuario_27001 WHERE id = ?',
         [req.params.id],
         function(err) {
           if (err) reject(err);
@@ -272,11 +272,11 @@ router.post('/eliminar/:id', isAuthenticated, async (req, res) => {
     });
     
     req.flash('success_msg', 'Archivo eliminado correctamente');
-    res.redirect('/implementacion');
+    res.redirect('/implementacion27001');
   } catch (error) {
     console.error('Error al eliminar el archivo:', error);
     req.flash('error_msg', 'Error al eliminar el archivo');
-    res.redirect('/implementacion');
+    res.redirect('/implementacion27001');
   }
 });
 
@@ -288,7 +288,7 @@ router.get('/check-archivo/:plantillaId', isAuthenticated, async (req, res) => {
     // Verificar si existe un archivo subido para esta plantilla por este usuario
     const archivo = await new Promise((resolve, reject) => {
       db.get(
-        'SELECT * FROM archivos_usuario WHERE usuario_id = ? AND plantilla_id = ?',
+        'SELECT * FROM archivos_usuario_27001 WHERE usuario_id = ? AND plantilla_id = ?',
         [req.user.id, plantillaId],
         (err, row) => {
           if (err) reject(err);
@@ -332,7 +332,7 @@ router.get('/descargar-archivo/:archivoId', isAuthenticated, async (req, res) =>
     // Verificar que el archivo pertenece al usuario actual
     const archivo = await new Promise((resolve, reject) => {
       db.get(
-        'SELECT * FROM archivos_usuario WHERE id = ? AND usuario_id = ?',
+        'SELECT * FROM archivos_usuario_27001 WHERE id = ? AND usuario_id = ?',
         [archivoId, req.user.id],
         (err, row) => {
           if (err) reject(err);

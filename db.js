@@ -45,6 +45,26 @@ db.serialize(() => {
     )
   `);
 
+  db.run(`
+    CREATE TABLE IF NOT EXISTS registro_iso_27001 (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      razon_social TEXT NOT NULL,
+      nit TEXT NOT NULL UNIQUE,
+      representante_legal TEXT NOT NULL,
+      sector_economico TEXT NOT NULL,
+      tipo_empresa TEXT NOT NULL,
+      numero_empleados INTEGER NOT NULL,
+      direccion TEXT NOT NULL,
+      telefonos TEXT NOT NULL,
+      email TEXT NOT NULL,
+      web TEXT,
+      facebook TEXT,
+      instagram TEXT,
+      tiktok TEXT,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
   // Checklist ISO 9001
   db.run(`
     CREATE TABLE IF NOT EXISTS iso_9001_checklist (
@@ -53,6 +73,14 @@ db.serialize(() => {
       titulo TEXT NOT NULL
     )
   `);
+
+  db.run(`
+    CREATE TABLE IF NOT EXISTS iso_27001_checklist (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      clausula TEXT NOT NULL,
+      titulo TEXT NOT NULL
+      )
+    `);
 
   // Resultados de auditoría
   db.run(`
@@ -65,6 +93,19 @@ db.serialize(() => {
       fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (empresa_id) REFERENCES registro_iso(id) ON DELETE CASCADE,
       FOREIGN KEY (checklist_id) REFERENCES iso_9001_checklist(id) ON DELETE CASCADE
+    )
+  `);
+
+  db.run(`
+    CREATE TABLE IF NOT EXISTS audit_results_27001 (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      empresa_id INTEGER NOT NULL,
+      checklist_id INTEGER NOT NULL,
+      estado TEXT NOT NULL,
+      observaciones TEXT,
+      fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (empresa_id) REFERENCES registro_iso_27001(id) ON DELETE CASCADE,
+      FOREIGN KEY (checklist_id) REFERENCES iso_27001_checklist(id) ON DELETE CASCADE
     )
   `);
 
@@ -85,6 +126,22 @@ db.serialize(() => {
   `);
 
   db.run(`
+    CREATE TABLE IF NOT EXISTS plantillas_27001 (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      clausula TEXT NOT NULL,
+      nombre TEXT NOT NULL,
+      descripcion TEXT,
+      archivo_path TEXT NOT NULL,
+      video_path TEXT,
+      contenido_capacitacion TEXT,
+      norma TEXT DEFAULT '27001',
+      checklist_id INTEGER,
+      FOREIGN KEY (checklist_id) REFERENCES iso_27001_checklist(id)
+    )
+  `);
+  
+  // Tabla para las capacitaciones del usuario
+  db.run(`
     CREATE TABLE IF NOT EXISTS usuarios_capacitaciones (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       usuario_id INTEGER NOT NULL,
@@ -93,6 +150,20 @@ db.serialize(() => {
       fecha_visto TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (usuario_id) REFERENCES usuarios(id),
       FOREIGN KEY (plantilla_id) REFERENCES plantillas(id),
+      UNIQUE(usuario_id, plantilla_id)
+    )
+
+  `);
+
+  db.run(`
+    CREATE TABLE IF NOT EXISTS usuarios_capacitaciones_27001 (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      usuario_id INTEGER NOT NULL,
+      plantilla_id INTEGER NOT NULL,
+      completado BOOLEAN DEFAULT 0,
+      fecha_visto TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (usuario_id) REFERENCES usuarios(id),
+      FOREIGN KEY (plantilla_id) REFERENCES plantillas_27001(id),
       UNIQUE(usuario_id, plantilla_id)
     )
 
@@ -110,7 +181,18 @@ db.serialize(() => {
       FOREIGN KEY (plantilla_id) REFERENCES plantillas(id)
     )
   `);
-
+  
+  db.run(`
+    CREATE TABLE IF NOT EXISTS archivos_usuario_27001 (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      usuario_id INTEGER NOT NULL,
+      plantilla_id INTEGER NOT NULL,
+      archivo_path TEXT NOT NULL,
+      fecha_subida DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (usuario_id) REFERENCES usuarios(id),
+      FOREIGN KEY (plantilla_id) REFERENCES plantillas_27001(id)
+    )
+  `);
 
 
   // Insertar datos iniciales en el checklist solo si está vacío
@@ -143,6 +225,37 @@ db.serialize(() => {
       ];
       data.forEach((item) => stmt.run(item[0], item[1]));
       stmt.finalize();
+    }
+  });
+
+  // Insertar datos iniciales en el checklist ISO 27001 solo si está vacío
+  db.get("SELECT COUNT(*) AS count FROM iso_27001_checklist", (err, row) => {
+    if (err) {
+      console.error("❌ Error verificando checklist 27001:", err.message);
+    } else if (row.count === 0) {
+      console.log("ℹ️ Insertando datos iniciales en iso_27001_checklist...");
+      const stmt = db.prepare(
+        `INSERT INTO iso_27001_checklist (clausula, titulo) VALUES (?, ?)`
+      );
+      const data27001 = [
+        ["A.5.1", "Políticas para la seguridad de la información"],
+        ["A.6.1", "Roles y responsabilidades de seguridad"],
+        ["A.7.1", "Verificación de antecedentes del personal"],
+        ["A.8.1", "Inventario de activos de información"],
+        ["A.9.1", "Política de control de acceso"],
+        ["A.10.1", "Controles criptográficos"],
+        ["A.11.1", "Protección física de instalaciones"],
+        ["A.12.1", "Procedimientos operativos documentados"],
+        ["A.13.1", "Gestión y seguridad de la red"],
+        ["A.14.1", "Requisitos de seguridad en proyectos"],
+        ["A.15.1", "Acuerdos de seguridad con proveedores"],
+        ["A.16.1", "Gestión de incidentes de seguridad"],
+        ["A.17.1", "Planificación de la continuidad"],
+        ["A.18.1", "Cumplimiento de requisitos legales"],
+      ];
+      data27001.forEach((item) => stmt.run(item[0], item[1]));
+      stmt.finalize();
+      console.log("✅ Datos iniciales de ISO 27001 insertados correctamente");
     }
   });
 

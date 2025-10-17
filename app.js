@@ -39,17 +39,24 @@ app.use('/plantillas', express.static('plantillas'));
 // Llamamos las rutas de otherRoutes
 const isoRoutes = require('./routes/isoRoutes');
 app.use('/', isoRoutes);
+const isoRoutes27001 = require('./routes/isoRoutes27001');
+app.use('/', isoRoutes27001);
 
 // Llamamos las rutas de authRoutes
 const authRoutes = require('./routes/authRoutes');
 app.use('/', authRoutes);
 
-// Configurar rutas con prefijos específicos ← CORRECCIÓN IMPORTANTE
+// Rutas de implementación 9001 | 27001
 const implementacionRoutes = require('./routes/implementacion');
 app.use('/implementacion', implementacionRoutes); // ← Cambiado de '/' a '/implementacion'
+const implementacionRoutes27001 = require('./routes/implementacion27001');
+app.use('/implementacion27001', implementacionRoutes27001);
 
+// Rutas de capacitación 9001 | 27001
 const capacitacionRoutes = require('./routes/capacitacion');
 app.use('/capacitacion', capacitacionRoutes); // ← Cambiado de '/' a '/capacitacion'
+const capacitacionRoutes27001 = require('./routes/capacitacion27001');
+app.use('/capacitacion27001', capacitacionRoutes27001); // ← Cambiado de '/' a '/capacitacion'
 
 // Ruta de prueba para verificar que el servidor funciona
 app.get('/test', (req, res) => {

@@ -1,0 +1,94 @@
+<header>
+    <nav class="navbar navbar-expand-lg navbar-dark" style="background: linear-gradient(135deg, #1e3a8a, #3b82f6);">
+        <div class="container">
+            <a class="navbar-brand" href="/IsoSelect">
+                <i class="fas fa-shield-alt me-2"></i>Sistema de Auditorías ISO 27001
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/IsoSelect" id="nav-dashboard">
+                            <i class="fas fa-home me-1"></i>Página Principal
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/implementacion27001" id="nav-implementacion">
+                            <i class="fas fa-file-excel me-1"></i>Implementación
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/capacitacion27001" id="nav-capacitacion">
+                            <i class="fas fa-graduation-cap me-1"></i>Capacitación
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/IsoForm27001" id="nav-auditoria">
+                            <i class="fas fa-clipboard-check me-1"></i>Auditoría
+                        </a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user me-1"></i><%= user.nombre_completo %>
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="/profile">
+                                <i class="fas fa-user-circle me-2"></i>Perfil
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="/logout">
+                                <i class="fas fa-sign-out-alt me-2"></i>Cerrar Sesión
+                            </a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+</header>
+
+<script>
+// Activar el enlace de navegación correspondiente a la página actual
+document.addEventListener('DOMContentLoaded', function() {
+    const currentPath = window.location.pathname;
+    const navLinks = {
+        '/IsoSelect': 'nav-dashboard',
+        '/implementacion27001': 'nav-implementacion',
+        '/capacitacion27001': 'nav-capacitacion',
+        '/IsoForm27001': 'nav-auditoria',
+        '/IsoChecklist27001': 'nav-checklist'
+    };
+    
+    // Activar el enlace correspondiente
+    Object.keys(navLinks).forEach(path => {
+        if (currentPath === path || currentPath.startsWith(path + '/')) {
+            const link = document.getElementById(navLinks[path]);
+            if (link) {
+                link.classList.add('active');
+                link.style.fontWeight = 'bold';
+            }
+        }
+    });
+    
+    // Activar dashboard si estamos en la raíz
+    if (currentPath === '/') {
+        const dashboardLink = document.getElementById('nav-dashboard');
+        if (dashboardLink) {
+            dashboardLink.classList.add('active');
+            dashboardLink.style.fontWeight = 'bold';
+        }
+    }
+    
+    // Resaltar navbar cuando un enlace está activo
+    const activeLinks = document.querySelectorAll('.nav-link.active');
+    activeLinks.forEach(link => {
+        link.style.color = '#ffffff';
+        link.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
+        link.style.borderRadius = '5px';
+    });
+});
+</script>

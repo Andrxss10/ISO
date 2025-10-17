@@ -17,6 +17,13 @@ router.get('/IsoForm9001', isAuthenticated, (req, res) => {
   res.render('IsoForm9001', alertData);
 });
 
+// Render ISO 27001 form
+router.get('/IsoForm27001', isAuthenticated, (req, res) => {
+  const alertData = req.session.alertData || {};
+  req.session.alertData = null;
+  res.render('IsoForm27001', alertData);
+});
+
 // POST - Registrar empresa ISO
 router.post('/registro-iso', (req, res) => {
   const {

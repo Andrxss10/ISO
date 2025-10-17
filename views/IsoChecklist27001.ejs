@@ -1,0 +1,1318 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Checklist ISO 27001:2022</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+  <style>
+    .progress-bar {
+      transition: width 0.3s ease;
+    }
+    .checklist-item {
+      transition: all 0.2s ease;
+    }
+    .checklist-item:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    }
+    .highlighted-item {
+      background-color: #f0f9ff;
+      border-left-color: #3b82f6 !important;
+    }
+    .pdf-loading {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(255, 255, 255, 0.8);
+      z-index: 9999;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+    }
+    .spinner {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #3b82f6;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-content {
+      background-color: white;
+      border-radius: 8px;
+      width: 90%;
+      max-width: 600px;
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-gray-50">
+  <!-- Loading indicator para generación de PDF -->
+  <div class="pdf-loading" id="pdf-loading">
+    <div class="spinner"></div>
+    <p class="mt-4 text-lg font-medium text-gray-700">Generando informe PDF...</p>
+  </div>
+
+  <!-- Modal para Capacitación -->
+  <div class="modal-overlay" id="training-modal">
+    <div class="modal-content">
+      <div class="p-6">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-xl font-bold text-gray-900" id="modal-title">Capacitación</h3>
+          <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600">
+            <i data-lucide="x" class="h-6 w-6"></i>
+          </button>
+        </div>
+        
+        <div class="mb-6">
+          <h4 class="text-lg font-semibold text-gray-900 mb-2 flex items-center gap-2">
+            <i data-lucide="file-text" class="h-5 w-5"></i>
+            Información del Control
+          </h4>
+          <div id="modal-info" class="prose max-w-none text-gray-700"></div>
+        </div>
+
+        <div>
+          <h4 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+            <i data-lucide="file-spreadsheet" class="h-5 w-5"></i>
+            Plantilla de Implementación
+          </h4>
+          
+          <div id="template-status" class="mb-4 p-4 rounded-lg bg-gray-100">
+            <p class="text-gray-600" id="status-message">Verificando estado de la plantilla...</p>
+          </div>
+          
+          <div class="flex flex-col gap-2">
+            <button id="download-template" class="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center justify-center gap-2">
+              <i data-lucide="download" class="h-4 w-4"></i>
+              Descargar Plantilla
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="container mx-auto px-4 py-8 max-w-7xl">
+    <!-- Header -->
+    <div class="mb-8">
+      <div class="flex items-center gap-3 mb-4">
+        <div class="p-3 rounded-lg bg-blue-600 text-white">
+          <i data-lucide="shield" class="h-8 w-8"></i>
+        </div>
+        <div>
+          <h1 class="text-4xl font-bold text-gray-900">Checklist ISO 27001:2022</h1>
+          <p class="text-gray-600 text-lg">Sistema de Gestión de Seguridad de la Información</p>
+          <p class="text-sm text-gray-500 mt-1" id="current-date"></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Statistics Overview -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 mb-8">
+      <!-- Progress Card -->
+      <div class="bg-white rounded-lg shadow p-4">
+        <div class="text-center">
+          <div class="text-2xl font-bold text-gray-900" id="progress-percentage">0%</div>
+          <div class="text-sm text-gray-600">Progreso General</div>
+          <div class="w-full bg-gray-200 rounded-full h-2 mt-2">
+            <div class="bg-blue-600 h-2 rounded-full progress-bar" id="progress-bar" style="width: 0%"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Cumple Card -->
+      <div class="bg-white rounded-lg shadow p-4">
+        <div class="text-center">
+          <div class="text-2xl font-bold text-green-600" id="cumple-count">0</div>
+          <div class="text-sm text-gray-600">Cumple</div>
+        </div>
+      </div>
+
+      <!-- No Cumple Card -->
+      <div class="bg-white rounded-lg shadow p-4">
+        <div class="text-center">
+          <div class="text-2xl font-bold text-red-600" id="no-cumple-count">0</div>
+          <div class="text-sm text-gray-600">No Cumple</div>
+        </div>
+      </div>
+
+      <!-- No Aplica Card -->
+      <div class="bg-white rounded-lg shadow p-4">
+        <div class="text-center">
+          <div class="text-2xl font-bold text-gray-600" id="no-aplica-count">0</div>
+          <div class="text-sm text-gray-600">No Aplica</div>
+        </div>
+      </div>
+
+      <!-- Pendiente Card -->
+      <div class="bg-white rounded-lg shadow p-4">
+        <div class="text-center">
+          <div class="text-2xl font-bold text-yellow-600" id="pendiente-count">0</div>
+          <div class="text-sm text-gray-600">Pendiente</div>
+        </div>
+      </div>
+
+      <!-- Generate PDF Button -->
+      <div class="bg-white rounded-lg shadow p-4 flex items-center justify-center">
+        <button id="generate-pdf" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center gap-2">
+          <i data-lucide="file-text" class="h-5 w-5"></i>
+          Generar PDF
+        </button>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="flex flex-col sm:flex-row gap-4 mb-8 justify-end">
+      <button id="save-data" class="px-6 py-3 bg-green-600 text-white rounded-md hover:bg-green-700 flex items-center justify-center gap-2 transition-colors">
+        <i data-lucide="save" class="h-5 w-5"></i>
+        Guardar Auditoría
+      </button>
+      <button id="finish-audit" class="px-6 py-3 bg-purple-600 text-white rounded-md hover:bg-purple-700 flex items-center justify-center gap-2 transition-colors">
+        <i data-lucide="check-circle" class="h-5 w-5"></i>
+        Terminar Auditoría
+      </button>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="flex flex-col">
+      <!-- Checklist Panel -->
+      <div class="w-full">
+        <div class="bg-white rounded-lg shadow">
+          <div class="p-6 border-b border-gray-200">
+            <h2 class="text-2xl font-bold text-gray-900 flex items-center gap-3">
+              <i data-lucide="shield-check" class="h-6 w-6"></i>
+              Controles de Seguridad ISO 27001:2022
+            </h2>
+            <p class="text-gray-600 mt-1">
+              Evaluación detallada de cumplimiento de controles de seguridad de la información
+            </p>
+          </div>
+
+          <div class="p-6">
+            <!-- Filters -->
+            <div class="flex flex-col lg:flex-row gap-4 mb-6">
+              <div class="flex-1">
+                <div class="relative">
+                  <i data-lucide="search" class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4"></i>
+                  <input
+                    type="text"
+                    id="search-input"
+                    placeholder="Buscar por título, descripción o control..."
+                    class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              </div>
+              <div class="flex items-center gap-2">
+                <i data-lucide="filter" class="h-4 w-4 text-gray-400"></i>
+                <select
+                  id="priority-filter"
+                  class="px-3 py-2 border border-gray-300 rounded-md bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="all">Todas las prioridades</option>
+                  <option value="high">Alta prioridad</option>
+                  <option value="medium">Prioridad media</option>
+                  <option value="low">Baja prioridad</option>
+                </select>
+              </div>
+              <div class="flex items-center gap-2">
+                <select
+                  id="category-filter"
+                  class="px-3 py-2 border border-gray-300 rounded-md bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="all">Todos los dominios</option>
+                  <!-- Las opciones se llenarán con JavaScript -->
+                </select>
+              </div>
+            </div>
+
+            <!-- Checklist Items -->
+            <div class="space-y-6" id="checklist-items">
+              <!-- Los elementos del checklist se generarán con JavaScript -->
+            </div>
+
+            <!-- Empty State -->
+            <div class="text-center py-8 hidden" id="empty-state">
+              <i data-lucide="file-text" class="h-12 w-12 text-gray-400 mx-auto mb-4"></i>
+              <p class="text-gray-500">No se encontraron elementos que coincidan con los filtros</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Inicializar iconos Lucide
+    lucide.createIcons();
+
+    // Mostrar fecha actual
+    function showCurrentDate() {
+      const now = new Date();
+      const options = { 
+        weekday: 'long', 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+      };
+      document.getElementById('current-date').textContent = now.toLocaleDateString('es-ES', options);
+    }
+    showCurrentDate();
+
+    // Datos del checklist ISO 27001:2022
+    const checklistItems = [
+      {
+        id: "1",
+        title: "Políticas para la seguridad de la información",
+        description: "Establecer políticas de seguridad de la información apropiadas para la organización",
+        completed: false,
+        priority: "high",
+        category: "A.5 Políticas de seguridad",
+        compliance: "",
+        observations: "",
+        clause: "A.5.1",
+        plantillaId: "1"
+      },
+      {
+        id: "2",
+        title: "Roles y responsabilidades de seguridad",
+        description: "Definir y asignar responsabilidades de seguridad de la información",
+        completed: false,
+        priority: "high",
+        category: "A.6 Organización de la seguridad",
+        compliance: "",
+        observations: "",
+        clause: "A.6.1",
+        plantillaId: "2"
+      },
+      {
+        id: "3",
+        title: "Verificación de antecedentes del personal",
+        description: "Verificar antecedentes de empleados y contratistas según políticas establecidas",
+        completed: false,
+        priority: "medium",
+        category: "A.7 Seguridad de recursos humanos",
+        compliance: "",
+        observations: "",
+        clause: "A.7.1",
+        plantillaId: "3"
+      },
+      {
+        id: "4",
+        title: "Inventario de activos de información",
+        description: "Identificar y mantener un inventario de activos de información",
+        completed: false,
+        priority: "high",
+        category: "A.8 Gestión de activos",
+        compliance: "",
+        observations: "",
+        clause: "A.8.1",
+        plantillaId: "4"
+      },
+      {
+        id: "5",
+        title: "Política de control de acceso",
+        description: "Establecer y mantener políticas de control de acceso basadas en necesidades de negocio",
+        completed: false,
+        priority: "high",
+        category: "A.9 Control de accesos",
+        compliance: "",
+        observations: "",
+        clause: "A.9.1",
+        plantillaId: "5"
+      },
+      {
+        id: "6",
+        title: "Controles criptográficos",
+        description: "Implementar controles criptográficos para proteger la confidencialidad e integridad",
+        completed: false,
+        priority: "medium",
+        category: "A.10 Criptografía",
+        compliance: "",
+        observations: "",
+        clause: "A.10.1",
+        plantillaId: "6"
+      },
+      {
+        id: "7",
+        title: "Protección física de instalaciones",
+        description: "Implementar controles de seguridad física para áreas seguras",
+        completed: false,
+        priority: "high",
+        category: "A.11 Seguridad física y ambiental",
+        compliance: "",
+        observations: "",
+        clause: "A.11.1",
+        plantillaId: "7"
+      },
+      {
+        id: "8",
+        title: "Procedimientos operativos documentados",
+        description: "Documentar procedimientos operativos para actividades de seguridad",
+        completed: false,
+        priority: "medium",
+        category: "A.12 Seguridad en las operaciones",
+        compliance: "",
+        observations: "",
+        clause: "A.12.1",
+        plantillaId: "8"
+      },
+      {
+        id: "9",
+        title: "Gestión y seguridad de la red",
+        description: "Gestionar y proteger la seguridad de las redes de información",
+        completed: false,
+        priority: "high",
+        category: "A.13 Seguridad en las comunicaciones",
+        compliance: "",
+        observations: "",
+        clause: "A.13.1",
+        plantillaId: "9"
+      },
+      {
+        id: "10",
+        title: "Requisitos de seguridad en proyectos",
+        description: "Incluir requisitos de seguridad en el ciclo de vida de desarrollo de sistemas",
+        completed: false,
+        priority: "medium",
+        category: "A.14 Adquisición y desarrollo",
+        compliance: "",
+        observations: "",
+        clause: "A.14.1",
+        plantillaId: "10"
+      },
+      {
+        id: "11",
+        title: "Acuerdos de seguridad con proveedores",
+        description: "Establecer acuerdos de seguridad con proveedores externos",
+        completed: false,
+        priority: "high",
+        category: "A.15 Relaciones con proveedores",
+        compliance: "",
+        observations: "",
+        clause: "A.15.1",
+        plantillaId: "11"
+      },
+      {
+        id: "12",
+        title: "Gestión de incidentes de seguridad",
+        description: "Establecer procedimientos para gestión y reporte de incidentes de seguridad",
+        completed: false,
+        priority: "high",
+        category: "A.16 Gestión de incidentes",
+        compliance: "",
+        observations: "",
+        clause: "A.16.1",
+        plantillaId: "12"
+      },
+      {
+        id: "13",
+        title: "Planificación de la continuidad",
+        description: "Planificar la continuidad del negocio para sistemas de información",
+        completed: false,
+        priority: "medium",
+        category: "A.17 Continuidad del negocio",
+        compliance: "",
+        observations: "",
+        clause: "A.17.1",
+        plantillaId: "13"
+      },
+      {
+        id: "14",
+        title: "Cumplimiento de requisitos legales",
+        description: "Identificar y cumplir con requisitos legales y contractuales aplicables",
+        completed: false,
+        priority: "high",
+        category: "A.18 Cumplimiento",
+        compliance: "",
+        observations: "",
+        clause: "A.18.1",
+        plantillaId: "14"
+      }
+    ];
+
+    // Contenido de capacitación para cada control
+    const trainingContent = {
+      "A.5.1": {
+        title: "Políticas de Seguridad - Control A.5.1",
+        content: `
+          <h3 class="text-lg font-semibold mb-2">Políticas para la Seguridad de la Información</h3>
+          <p class="mb-4"><strong>Objetivo:</strong> Establecer un conjunto de políticas para la seguridad de la información que sea apropiado para la organización.</p>
+
+          <h4 class="font-medium mb-2">Requisitos Clave:</h4>
+          <ul class="list-disc list-inside mb-4">
+            <li>Definir políticas alineadas con objetivos de negocio</li>
+            <li>Aprobar políticas por la alta dirección</li>
+            <li>Comunicar políticas a empleados y partes relevantes</li>
+            <li>Revisar políticas periódicamente</li>
+          </ul>
+
+          <h4 class="font-medium mb-2">Evidencias Requeridas:</h4>
+          <ul class="list-disc list-inside">
+            <li>Documento de políticas de seguridad</li>
+            <li>Registros de aprobación y comunicación</li>
+            <li>Programa de revisiones periódicas</li>
+          </ul>
+        `
+      },
+      "A.6.1": {
+        title: "Roles y Responsabilidades - Control A.6.1",
+        content: `
+          <h3 class="text-lg font-semibold mb-2">Roles y Responsabilidades de Seguridad</h3>
+          <p class="mb-4"><strong>Objetivo:</strong> Definir y asignar todas las responsabilidades de seguridad de la información.</p>
+
+          <h4 class="font-medium mb-2">Requisitos Clave:</h4>
+          <ul class="list-disc list-inside mb-4">
+            <li>Asignar responsabilidad por la seguridad de la información</li>
+            <li>Definir roles específicos de seguridad</li>
+            <li>Establecer líneas de autoridad y comunicación</li>
+            <li>Documentar responsabilidades en descripciones de puesto</li>
+          </ul>
+
+          <h4 class="font-medium mb-2">Evidencias Requeridas:</h4>
+          <ul class="list-disc list-inside">
+            <li>Matriz de responsabilidades</li>
+            <li>Descripciones de puesto actualizadas</li>
+            <li>Organigrama con roles de seguridad</li>
+          </ul>
+        `
+      },
+      "A.7.1": {
+        title: "Verificación de Antecedentes - Control A.7.1",
+        content: `
+          <h3 class="text-lg font-semibold mb-2">Verificación de Antecedentes</h3>
+          <p class="mb-4"><strong>Objetivo:</strong> Verificar antecedentes de todos los candidatos a empleados, contratistas y terceros.</p>
+
+          <h4 class="font-medium mb-2">Requisitos Clave:</h4>
+          <ul class="list-disc list-inside mb-4">
+            <li>Establecer procedimientos de verificación</li>
+            <li>Verificar referencias laborales y académicas</li>
+            <li>Validar antecedentes penales cuando sea apropiado</li>
+            <li>Documentar resultados de verificaciones</li>
+          </ul>
+
+          <h4 class="font-medium mb-2">Evidencias Requeridas:</h4>
+          <ul class="list-disc list-inside">
+            <li>Procedimiento de verificación de antecedentes</li>
+            <li>Registros de verificaciones realizadas</li>
+            <li>Autorizaciones para verificación</li>
+          </ul>
+        `
+      },
+      "A.8.1": {
+        title: "Inventario de Activos - Control A.8.1",
+        content: `
+          <h3 class="text-lg font-semibold mb-2">Inventario de Activos de Información</h3>
+          <p class="mb-4"><strong>Objetivo:</strong> Identificar los activos de información y definir las responsabilidades de protección adecuadas.</p>
+
+          <h4 class="font-medium mb-2">Requisitos Clave:</h4>
+          <ul class="list-disc list-inside mb-4">
+            <li>Identificar todos los activos de información importantes</li>
+            <li>Mantener inventario actualizado de activos</li>
+            <li>Asignar propietarios para cada activo</li>
+            <li>Definir reglas de aceptación de uso</li>
+          </ul>
+
+          <h4 class="font-medium mb-2">Evidencias Requeridas:</h4>
+          <ul class="list-disc list-inside">
+            <li>Inventario de activos de información</li>
+            <li>Registro de propietarios de activos</li>
+            <li>Políticas de aceptación de uso</li>
+          </ul>
+        `
+      },
+      "A.9.1": {
+        title: "Control de Accesos - Control A.9.1",
+        content: `
+          <h3 class="text-lg font-semibold mb-2">Política de Control de Acceso</h3>
+          <p class="mb-4"><strong>Objetivo:</strong> Limitar el acceso a la información y los sistemas de procesamiento de la información.</p>
+
+          <h4 class="font-medium mb-2">Requisitos Clave:</h4>
+          <ul class="list-disc list-inside mb-4">
+            <li>Establecer política de control de acceso basada en negocio</li>
+            <li>Implementar principio de mínimo privilegio</li>
+            <li>Gestionar ciclo de vida de identidades de usuario</li>
+            <li>Revisar periódicamente derechos de acceso</li>
+          </ul>
+
+          <h4 class="font-medium mb-2">Evidencias Requeridas:</h4>
+          <ul class="list-disc list-inside">
+            <li>Política de control de acceso</li>
+            <li>Matriz de roles y permisos</li>
+            <li>Registros de revisiones de acceso</li>
+          </ul>
+        `
+      },
+      "A.10.1": {
+        title: "Controles Criptográficos - Control A.10.1",
+        content: `
+          <h3 class="text-lg font-semibold mb-2">Controles Criptográficos</h3>
+          <p class="mb-4"><strong>Objetivo:</strong> Garantizar el uso correcto y efectivo de la criptografía para proteger la confidencialidad, autenticidad e integridad de la información.</p>
+
+          <h4 class="font-medium mb-2">Requisitos Clave:</h4>
+          <ul class="list-disc list-inside mb-4">
+            <li>Desarrollar política de uso de criptografía</li>
+            <li>Proteger claves criptográficas durante su ciclo de vida</li>
+            <li>Utilizar algoritmos y longitudes de clave apropiados</li>
+            <li>Gestionar certificados digitales cuando sea necesario</li>
+          </ul>
+
+          <h4 class="font-medium mb-2">Evidencias Requeridas:</h4>
+          <ul class="list-disc list-inside">
+            <li>Política de criptografía</li>
+            <li>Procedimientos de gestión de claves</li>
+            <li>Inventario de sistemas criptográficos</li>
+          </ul>
+        `
+      },
+      "A.11.1": {
+        title: "Seguridad Física - Control A.11.1",
+        content: `
+          <h3 class="text-lg font-semibold mb-2">Protección Física de Instalaciones</h3>
+          <p class="mb-4"><strong>Objetivo:</strong> Impedir el acceso físico no autorizado, daño e interferencia a los locales y a la información de la organización.</p>
+
+          <h4 class="font-medium mb-2">Requisitos Clave:</h4>
+          <ul class="list-disc list-inside mb-4">
+            <li>Definir perímetros de seguridad física</li>
+            <li>Implementar controles de acceso físico</li>
+            <li>Proteger oficinas, salas y instalaciones</li>
+            <li>Monitorear áreas sensibles</li>
+          </ul>
+
+          <h4 class="font-medium mb-2">Evidencias Requeridas:</h4>
+          <ul class="list-disc list-inside">
+            <li>Planos de seguridad física</li>
+            <li>Registros de acceso físico</li>
+            <li>Procedimientos de respuesta a incidentes físicos</li>
+          </ul>
+        `
+      },
+      "A.12.1": {
+        title: "Procedimientos Operativos - Control A.12.1",
+        content: `
+          <h3 class="text-lg font-semibold mb-2">Procedimientos Operativos Documentados</h3>
+          <p class="mb-4"><strong>Objetivo:</strong> Asegurar el correcto y seguro funcionamiento de los sistemas de información.</p>
+
+          <h4 class="font-medium mb-2">Requisitos Clave:</h4>
+          <ul class="list-disc list-inside mb-4">
+            <li>Documentar procedimientos para actividades operativas</li>
+            <li>Establecer responsabilidades y procesos</li>
+            <li>Separar funciones de desarrollo, prueba y operación</li>
+            <li>Gestionar cambios en entornos operativos</li>
+          </ul>
+
+          <h4 class="font-medium mb-2">Evidencias Requeridas:</h4>
+          <ul class="list-disc list-inside">
+            <li>Procedimientos operativos documentados</li>
+            <li>Registros de separación de funciones</li>
+            <li>Procedimientos de gestión de cambios</li>
+          </ul>
+        `
+      },
+      "A.13.1": {
+        title: "Seguridad de Redes - Control A.13.1",
+        content: `
+          <h3 class="text-lg font-semibold mb-2">Gestión y Seguridad de la Red</h3>
+          <p class="mb-4"><strong>Objetivo:</strong> Garantizar la protección de la información en las redes y su infraestructura de soporte.</p>
+
+          <h4 class="font-medium mb-2">Requisitos Clave:</h4>
+          <ul class="list-disc list-inside mb-4">
+            <li>Segmentar redes según niveles de seguridad</li>
+            <li>Implementar controles de acceso a la red</li>
+            <li>Monitorear tráfico de red</li>
+            <li>Proteger servicios de red</li>
+          </ul>
+
+          <h4 class="font-medium mb-2">Evidencias Requeridas:</h4>
+          <ul class="list-disc list-inside">
+            <li>Diagramas de arquitectura de red</li>
+            <li>Políticas de seguridad de red</li>
+            <li>Registros de monitoreo de red</li>
+          </ul>
+        `
+      },
+      "A.14.1": {
+        title: "Requisitos de Seguridad - Control A.14.1",
+        content: `
+          <h3 class="text-lg font-semibold mb-2">Requisitos de Seguridad en Proyectos</h3>
+          <p class="mb-4"><strong>Objetivo:</strong> Asegurar que la seguridad de la información es una parte integral de los sistemas de información durante todo el ciclo de vida.</p>
+
+          <h4 class="font-medium mb-2">Requisitos Clave:</h4>
+          <ul class="list-disc list-inside mb-4">
+            <li>Incluir seguridad en especificaciones de requisitos</li>
+            <li>Realizar análisis de riesgos en fases tempranas</li>
+            <li>Implementar principios de seguridad por diseño</li>
+            <li>Validar seguridad antes de puesta en producción</li>
+          </ul>
+
+          <h4 class="font-medium mb-2">Evidencias Requeridas:</h4>
+          <ul class="list-disc list-inside">
+            <li>Especificaciones de requisitos de seguridad</li>
+            <li>Informes de análisis de riesgos</li>
+            <li>Procedimientos de validación de seguridad</li>
+          </ul>
+        `
+      },
+      "A.15.1": {
+        title: "Acuerdos con Proveedores - Control A.15.1",
+        content: `
+          <h3 class="text-lg font-semibold mb-2">Acuerdos de Seguridad con Proveedores</h3>
+          <p class="mb-4"><strong>Objetivo:</strong> Mantener un nivel apropiado de seguridad de la información y de entrega de servicios de acuerdo con acuerdos de suministro.</p>
+
+          <h4 class="font-medium mb-2">Requisitos Clave:</h4>
+          <ul class="list-disc list-inside mb-4">
+            <li>Incluir requisitos de seguridad en acuerdos</li>
+            <li>Evaluar riesgos de proveedores</li>
+            <li>Monitorear cumplimiento de proveedores</li>
+            <li>Gestionar terminación de contratos</li>
+          </ul>
+
+          <h4 class="font-medium mb-2">Evidencias Requeridas:</h4>
+          <ul class="list-disc list-inside">
+            <li>Acuerdos de nivel de servicio (SLA)</li>
+            <li>Evaluaciones de riesgos de proveedores</li>
+            <li>Registros de monitoreo de proveedores</li>
+          </ul>
+        `
+      },
+      "A.16.1": {
+        title: "Gestión de Incidentes - Control A.16.1",
+        content: `
+          <h3 class="text-lg font-semibold mb-2">Gestión de Incidentes de Seguridad</h3>
+          <p class="mb-4"><strong>Objetivo:</strong> Garantizar un enfoque consistente y efectivo para la gestión de incidentes de seguridad de la información.</p>
+
+          <h4 class="font-medium mb-2">Requisitos Clave:</h4>
+          <ul class="list-disc list-inside mb-4">
+            <li>Establecer procedimientos de reporte de incidentes</li>
+            <li>Definir roles y responsabilidades</li>
+            <li>Implementar proceso de respuesta a incidentes</li>
+            <li>Realizar análisis post-incidente</li>
+          </ul>
+
+          <h4 class="font-medium mb-2">Evidencias Requeridas:</h4>
+          <ul class="list-disc list-inside">
+            <li>Procedimiento de gestión de incidentes</li>
+            <li>Registros de incidentes de seguridad</li>
+            <li>Informes de análisis post-incidente</li>
+          </ul>
+        `
+      },
+      "A.17.1": {
+        title: "Continuidad del Negocio - Control A.17.1",
+        content: `
+          <h3 class="text-lg font-semibold mb-2">Planificación de la Continuidad</h3>
+          <p class="mb-4"><strong>Objetivo:</strong> La organización debe planificar, establecer, implementar, mantener y probar la continuidad de los sistemas de información.</p>
+
+          <h4 class="font-medium mb-2">Requisitos Clave:</h4>
+          <ul class="list-disc list-inside mb-4">
+            <li>Realizar análisis de impacto al negocio</li>
+            <li>Desarrollar planes de continuidad</li>
+            <li>Definir estrategias de recuperación</li>
+            <li>Probar planes periódicamente</li>
+          </ul>
+
+          <h4 class="font-medium mb-2">Evidencias Requeridas:</h4>
+          <ul class="list-disc list-inside">
+            <li>Plan de continuidad del negocio</li>
+            <li>Análisis de impacto al negocio</li>
+            <li>Registros de pruebas de continuidad</li>
+          </ul>
+        `
+      },
+      "A.18.1": {
+        title: "Cumplimiento Legal - Control A.18.1",
+        content: `
+          <h3 class="text-lg font-semibold mb-2">Cumplimiento de Requisitos Legales</h3>
+          <p class="mb-4"><strong>Objetivo:</strong> Evitar incumplimientos de cualquier requisito legal, estatutario, regulatorio o contractual y de cualquier requisito de seguridad de la información.</p>
+
+          <h4 class="font-medium mb-2">Requisitos Clave:</h4>
+          <ul class="list-disc list-inside mb-4">
+            <li>Identificar requisitos legales aplicables</li>
+            <li>Implementar controles para cumplir requisitos</li>
+            <li>Realizar revisiones de cumplimiento</li>
+            <li>Mantener registros de protección de datos</li>
+          </ul>
+
+          <h4 class="font-medium mb-2">Evidencias Requeridas:</h4>
+          <ul class="list-disc list-inside">
+            <li>Inventario de requisitos legales</li>
+            <li>Informes de revisiones de cumplimiento</li>
+            <li>Políticas de protección de datos</li>
+          </ul>
+        `
+      },
+      "default": {
+        title: "Capacitación ISO 27001",
+        content: `
+          <h3 class="text-lg font-semibold mb-2">Información de Capacitación</h3>
+          <p class="mb-4">El contenido de capacitación específico para este control está en desarrollo.</p>
+          
+          <h4 class="font-medium mb-2">Recursos Adicionales:</h4>
+          <ul class="list-disc list-inside">
+            <li>Norma ISO 27001:2022</li>
+            <li>Guías de implementación de controles</li>
+            <li>Ejemplos de mejores prácticas de seguridad</li>
+          </ul>
+        `
+      }
+    };
+
+    // Estado de la aplicación
+    let currentState = {
+      searchTerm: "",
+      filterPriority: "all",
+      filterCategory: "all",
+      selectedClause: null,
+      selectedItemId: null,
+      currentPlantillaId: null
+    };
+
+    // Funciones de utilidad
+    function getPriorityColor(priority) {
+      switch (priority) {
+        case "high":
+          return "bg-red-100 text-red-800 border-red-200";
+        case "medium":
+          return "bg-yellow-100 text-yellow-800 border-yellow-200";
+        case "low":
+          return "bg-green-100 text-green-800 border-green-200";
+        default:
+          return "bg-gray-100 text-gray-800 border-gray-200";
+      }
+    }
+
+    function getPriorityText(priority) {
+      switch (priority) {
+        case "high":
+          return "Alta";
+        case "medium":
+          return "Media";
+        case "low":
+          return "Baja";
+        default:
+          return "";
+      }
+    }
+
+    function getComplianceColor(compliance) {
+      switch (compliance) {
+        case "cumple":
+          return "bg-green-100 text-green-800 border-green-200";
+        case "no_cumple":
+          return "bg-red-100 text-red-800 border-red-200";
+        case "no_aplica":
+          return "bg-gray-100 text-gray-800 border-gray-200";
+        default:
+          return "bg-yellow-100 text-yellow-800 border-yellow-200";
+      }
+    }
+
+    function getComplianceText(compliance) {
+      switch (compliance) {
+        case "cumple":
+          return "Cumple";
+        case "no_cumple":
+          return "No Cumple";
+        case "no_aplica":
+          return "No Aplica";
+        default:
+          return "Pendiente";
+      }
+    }
+
+    function getProgress() {
+      const completed = checklistItems.filter(item => item.completed).length;
+      return Math.round((completed / checklistItems.length) * 100);
+    }
+
+    function getComplianceStats() {
+      const cumple = checklistItems.filter(item => item.compliance === "cumple").length;
+      const noCumple = checklistItems.filter(item => item.compliance === "no_cumple").length;
+      const noAplica = checklistItems.filter(item => item.compliance === "no_aplica").length;
+      const pendiente = checklistItems.filter(item => item.compliance === "").length;
+      return { cumple, noCumple, noAplica, pendiente };
+    }
+
+    function filterItems() {
+      return checklistItems.filter(item => {
+        const matchesSearch =
+          item.title.toLowerCase().includes(currentState.searchTerm.toLowerCase()) ||
+          item.description.toLowerCase().includes(currentState.searchTerm.toLowerCase()) ||
+          item.clause.includes(currentState.searchTerm);
+        const matchesPriority = currentState.filterPriority === "all" || item.priority === currentState.filterPriority;
+        const matchesCategory = currentState.filterCategory === "all" || item.category === currentState.filterCategory;
+        return matchesSearch && matchesPriority && matchesCategory;
+      });
+    }
+
+    function updateStats() {
+      const progress = getProgress();
+      document.getElementById('progress-percentage').textContent = `${progress}%`;
+      document.getElementById('progress-bar').style.width = `${progress}%`;
+      
+      const stats = getComplianceStats();
+      document.getElementById('cumple-count').textContent = stats.cumple;
+      document.getElementById('no-cumple-count').textContent = stats.noCumple;
+      document.getElementById('no-aplica-count').textContent = stats.noAplica;
+      document.getElementById('pendiente-count').textContent = stats.pendiente;
+    }
+
+    function renderChecklistItems() {
+      const container = document.getElementById('checklist-items');
+      const emptyState = document.getElementById('empty-state');
+      const filteredItems = filterItems();
+      
+      if (filteredItems.length === 0) {
+        container.innerHTML = '';
+        emptyState.classList.remove('hidden');
+        return;
+      }
+      
+      emptyState.classList.add('hidden');
+      
+      container.innerHTML = filteredItems.map(item => `
+        <div class="bg-white rounded-lg border-l-4 border-l-blue-500/50 shadow-sm checklist-item ${currentState.selectedItemId === item.id ? 'highlighted-item' : ''}" id="item-${item.id}">
+          <div class="p-6">
+            <div class="space-y-4">
+              <!-- Header Section -->
+              <div class="flex items-start gap-4">
+                <input 
+                  type="checkbox" 
+                  id="checkbox-${item.id}" 
+                  ${item.completed ? 'checked' : ''}
+                  class="mt-1 h-5 w-5 text-blue-600 rounded focus:ring-blue-500"
+                  onchange="toggleItem('${item.id}')"
+                />
+                <div class="flex-1 space-y-2">
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                      <button onclick="openTrainingModal('${item.clause}', '${item.title}', '${item.id}', '${item.plantillaId}')" class="text-base font-medium cursor-pointer hover:text-blue-600 transition-colors ${item.completed ? 'line-through text-gray-400' : 'text-gray-900'} text-left">
+                        ${item.title}
+                      </button>
+                    </div>
+                    <div class="flex items-center gap-2">
+                      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200">
+                        Control ${item.clause}
+                      </span>
+                      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getPriorityColor(item.priority)}">
+                        ${getPriorityText(item.priority)}
+                      </span>
+                      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                        ${item.category}
+                      </span>
+                    </div>
+                  </div>
+                  <p class="text-sm ${item.completed ? 'text-gray-400' : 'text-gray-600'}">
+                    ${item.description}
+                  </p>
+                </div>
+              </div>
+
+              <!-- Compliance and Observations Section -->
+              <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 pt-4 border-t border-gray-200">
+                <div class="space-y-2">
+                  <label class="text-sm font-medium text-gray-700 flex items-center gap-2">
+                    <i data-lucide="shield" class="h-4 w-4"></i>
+                    Estado de Cumplimiento
+                  </label>
+                  <select 
+                    onchange="updateCompliance('${item.id}', this.value)"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="" ${item.compliance === "" ? "selected" : ""}>Seleccionar estado</option>
+                    <option value="cumple" ${item.compliance === "cumple" ? "selected" : ""}>Cumple</option>
+                    <option value="no_cumple" ${item.compliance === "no_cumple" ? "selected" : ""}>No Cumple</option>
+                    <option value="no_aplica" ${item.compliance === "no_aplica" ? "selected" : ""}>No Aplica</option>
+                  </select>
+                  ${item.compliance ? `
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getComplianceColor(item.compliance)}">
+                      ${getComplianceText(item.compliance)}
+                    </span>
+                  ` : ''}
+                </div>
+
+                <div class="space-y-2">
+                  <label class="text-sm font-medium text-gray-700 flex items-center gap-2">
+                    <i data-lucide="message-square" class="h-4 w-4"></i>
+                    Observaciones
+                  </label>
+                  <textarea 
+                    placeholder="Agregar observaciones, evidencias o comentarios sobre el cumplimiento..."
+                    onchange="updateObservations('${item.id}', this.value)"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[80px]"
+                  >${item.observations}</textarea>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `).join('');
+      
+      // Volver a crear iconos para los nuevos elementos
+      lucide.createIcons();
+    }
+
+    function populateCategoryFilter() {
+      const categories = [...new Set(checklistItems.map(item => item.category))];
+      const filter = document.getElementById('category-filter');
+      
+      categories.forEach(category => {
+        const option = document.createElement('option');
+        option.value = category;
+        option.textContent = category;
+        filter.appendChild(option);
+      });
+    }
+
+    // Funciones de manipulación de datos
+    function toggleItem(itemId) {
+      const item = checklistItems.find(i => i.id === itemId);
+      if (item) {
+        item.completed = !item.completed;
+        updateStats();
+        renderChecklistItems();
+      }
+    }
+
+    function updateCompliance(itemId, compliance) {
+      const item = checklistItems.find(i => i.id === itemId);
+      if (item) {
+        item.compliance = compliance;
+        updateStats();
+        renderChecklistItems();
+      }
+    }
+
+    function updateObservations(itemId, observations) {
+      const item = checklistItems.find(i => i.id === itemId);
+      if (item) {
+        item.observations = observations;
+      }
+    }
+
+    // Función para verificar si existe una plantilla subida por el usuario
+    async function checkUserTemplate(plantillaId) {
+      try {
+        // Hacer una petición al servidor para verificar si el usuario subió un archivo
+        const response = await fetch(`/implementacion27001/check-archivo/${plantillaId}`);
+        
+        if (!response.ok) {
+          throw new Error('Error al verificar plantilla');
+        }
+        
+        const data = await response.json();
+        return data;
+      } catch (error) {
+        console.error('Error:', error);
+        return {
+          existe: false,
+          archivo: null,
+          mensaje: 'Error al verificar la plantilla'
+        };
+      }
+    }
+
+    // Función para descargar la plantilla del usuario
+    function downloadUserTemplate(archivoId) {
+      // Crear un formulario para enviar la solicitud de descarga
+      const form = document.createElement('form');
+      form.method = 'GET';
+      form.action = `/implementacion27001/descargar-archivo/${archivoId}`;
+      form.target = '_blank';
+      document.body.appendChild(form);
+      form.submit();
+      document.body.removeChild(form);
+    }
+
+    // Funciones para el modal de capacitación
+    async function openTrainingModal(clause, title, itemId, plantillaId) {
+      currentState.selectedClause = clause;
+      currentState.selectedItemId = itemId;
+      currentState.currentPlantillaId = plantillaId;
+      
+      // Obtener contenido de capacitación
+      const content = trainingContent[clause] || trainingContent.default;
+      
+      // Actualizar modal
+      document.getElementById('modal-title').textContent = title;
+      document.getElementById('modal-info').innerHTML = content.content;
+      
+      // Verificar si existe la plantilla subida por el usuario
+      const templateInfo = await checkUserTemplate(plantillaId);
+      updateTemplateStatus(templateInfo);
+      
+      // Configurar botón de descarga
+      const downloadBtn = document.getElementById('download-template');
+      
+      if (templateInfo.existe && templateInfo.archivo) {
+        downloadBtn.onclick = () => downloadUserTemplate(templateInfo.archivo.id);
+        downloadBtn.disabled = false;
+        downloadBtn.classList.remove('bg-gray-400', 'cursor-not-allowed');
+        downloadBtn.classList.add('bg-blue-600', 'hover:bg-blue-700');
+      } else {
+        downloadBtn.disabled = true;
+        downloadBtn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+        downloadBtn.classList.add('bg-gray-400', 'cursor-not-allowed');
+      }
+      
+      // Mostrar modal
+      document.getElementById('training-modal').style.display = 'flex';
+      
+      // Resaltar el elemento seleccionado
+      renderChecklistItems();
+    }
+
+    function updateTemplateStatus(templateInfo) {
+      const statusElement = document.getElementById('status-message');
+      
+      if (templateInfo.existe && templateInfo.archivo) {
+        // Formatear fecha
+        const fechaSubida = new Date(templateInfo.archivo.fecha_subida).toLocaleDateString('es-ES');
+        
+        statusElement.innerHTML = `
+          <div class="flex items-center text-green-600">
+            <i data-lucide="check-circle" class="h-5 w-5 mr-2"></i>
+            <div>
+              <span>Plantilla disponible (subida el ${fechaSubida})</span>
+              <div class="text-sm text-green-700">${templateInfo.archivo.nombre_archivo || 'Archivo subido'}</div>
+            </div>
+          </div>
+        `;
+      } else {
+        statusElement.innerHTML = `
+          <div class="flex items-center text-yellow-600">
+            <i data-lucide="alert-circle" class="h-5 w-5 mr-2"></i>
+            <span>${templateInfo.mensaje || 'No se ha subido una plantilla para este control'}</span>
+          </div>
+        `;
+      }
+      
+      lucide.createIcons();
+    }
+
+    function closeModal() {
+      document.getElementById('training-modal').style.display = 'none';
+      currentState.selectedClause = null;
+      currentState.selectedItemId = null;
+      currentState.currentPlantillaId = null;
+      renderChecklistItems();
+    }
+
+    // Función para generar el PDF
+    function generatePDF() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      
+      // Mostrar indicador de carga
+      document.getElementById('pdf-loading').style.display = 'flex';
+      
+      // Obtener fecha y hora actual
+      const now = new Date();
+      const dateTime = now.toLocaleString('es-ES');
+      
+      // Título del documento
+      doc.setFontSize(20);
+      doc.setTextColor(40, 40, 40);
+      doc.text('Informe de Checklist ISO 27001:2022', 105, 20, { align: 'center' });
+      
+      // Fecha y hora
+      doc.setFontSize(12);
+      doc.setTextColor(100, 100, 100);
+      doc.text(`Generado el: ${dateTime}`, 105, 30, { align: 'center' });
+      
+      // Estadísticas
+      doc.setFontSize(14);
+      doc.setTextColor(40, 40, 40);
+      doc.text('Resumen de Estadísticas', 20, 45);
+      
+      doc.setFontSize(12);
+      const stats = getComplianceStats();
+      const progress = getProgress();
+      
+      doc.text(`Progreso General: ${progress}%`, 20, 55);
+      doc.text(`Cumple: ${stats.cumple}`, 20, 65);
+      doc.text(`No Cumple: ${stats.noCumple}`, 20, 75);
+      doc.text(`No Aplica: ${stats.noAplica}`, 20, 85);
+      doc.text(`Pendiente: ${stats.pendiente}`, 20, 95);
+      
+      // Detalles del checklist
+      let y = 110;
+      doc.setFontSize(14);
+      doc.text('Detalles del Checklist', 20, y);
+      y += 10;
+      
+      doc.setFontSize(10);
+      checklistItems.forEach((item, index) => {
+        if (y > 260) {
+          doc.addPage();
+          y = 20;
+        }
+        
+        doc.setFontSize(10);
+        doc.setTextColor(40, 40, 40);
+        doc.setFont(undefined, 'bold');
+        doc.text(`${item.clause} - ${item.title}`, 20, y);
+        y += 7;
+        
+        doc.setFont(undefined, 'normal');
+        doc.setTextColor(100, 100, 100);
+        
+        // Estado de cumplimiento
+        const complianceText = getComplianceText(item.compliance);
+        let complianceColor;
+        switch (item.compliance) {
+          case 'cumple': complianceColor = [0, 128, 0]; break;
+          case 'no_cumple': complianceColor = [255, 0, 0]; break;
+          case 'no_aplica': complianceColor = [100, 100, 100]; break;
+          default: complianceColor = [200, 150, 0];
+        }
+        
+        doc.setTextColor(...complianceColor);
+        doc.text(`Estado: ${complianceText}`, 20, y);
+        y += 5;
+        
+        doc.setTextColor(100, 100, 100);
+        doc.text(`Dominio: ${item.category}`, 20, y);
+        y += 5;
+        
+        doc.text(`Prioridad: ${getPriorityText(item.priority)}`, 20, y);
+        y += 5;
+        
+        if (item.observations) {
+          const splitObservations = doc.splitTextToSize(`Observaciones: ${item.observations}`, 170);
+          doc.text(splitObservations, 20, y);
+          y += (splitObservations.length * 5) + 3;
+        }
+        
+        y += 5;
+      });
+      
+      // Guardar el PDF
+      setTimeout(() => {
+        doc.save(`Informe_ISO_27001_${now.getTime()}.pdf`);
+        // Ocultar indicador de carga
+        document.getElementById('pdf-loading').style.display = 'none';
+      }, 500);
+    }
+
+    // Función para guardar los datos en la base de datos
+    async function saveChecklistData() {
+      try {
+        // Mostrar indicador de carga
+        const saveButton = document.getElementById('save-data');
+        const originalText = saveButton.innerHTML;
+        saveButton.innerHTML = '<i data-lucide="loader" class="h-5 w-5 animate-spin"></i> Guardando...';
+        saveButton.disabled = true;
+        
+        // Obtener el ID de la empresa (simulado para este ejemplo)
+        // En una aplicación real, esto vendría de tu sistema de autenticación o base de datos
+        const empresaId = 1; // Este valor debería ser dinámico en tu aplicación
+        
+        // Preparar datos para enviar
+        const dataToSave = {
+          empresa_id: parseInt(empresaId),
+          resultados: checklistItems.map(item => ({
+            clausula: item.clause,
+            estado: item.compliance === "cumple" ? "Cumple" : 
+                    item.compliance === "no_cumple" ? "No cumple" : 
+                    item.compliance === "no_aplica" ? "No aplica" : "Pendiente",
+            observaciones: item.observations || ""
+          }))
+        };
+        
+        // Enviar datos al servidor
+        const response = await fetch('/guardar-checklist-27001', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(dataToSave)
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok) {
+          // Mostrar mensaje de éxito
+          alert('Auditoría guardada correctamente en la base de datos');
+        } else {
+          throw new Error(result.message || 'Error al guardar los datos');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        alert('Error al guardar los datos: ' + error.message);
+      } finally {
+        // Restaurar botón
+        const saveButton = document.getElementById('save-data');
+        saveButton.innerHTML = '<i data-lucide="save" class="h-5 w-5"></i> Guardar Auditoría';
+        saveButton.disabled = false;
+        lucide.createIcons();
+      }
+    }
+
+    // Función para terminar la auditoría
+    function finishAudit() {
+      if (confirm('¿Estás seguro de que deseas terminar la auditoría? Se redirigirá al menú principal.')) {
+        // Redirigir al menú principal
+        window.location.href = '/IsoSelect';
+      }
+    }
+
+    // Inicialización
+    document.addEventListener('DOMContentLoaded', function() {
+      // Configurar event listeners
+      document.getElementById('search-input').addEventListener('input', function(e) {
+        currentState.searchTerm = e.target.value;
+        renderChecklistItems();
+      });
+      
+      document.getElementById('priority-filter').addEventListener('change', function(e) {
+        currentState.filterPriority = e.target.value;
+        renderChecklistItems();
+      });
+      
+      document.getElementById('category-filter').addEventListener('change', function(e) {
+        currentState.filterCategory = e.target.value;
+        renderChecklistItems();
+      });
+      
+      document.getElementById('generate-pdf').addEventListener('click', generatePDF);
+      
+      document.getElementById('save-data').addEventListener('click', saveChecklistData);
+      
+      document.getElementById('finish-audit').addEventListener('click', finishAudit);
+      
+      // Inicializar vista
+      populateCategoryFilter();
+      updateStats();
+      renderChecklistItems();
+    });
+  </script>
+</body>
+</html>
