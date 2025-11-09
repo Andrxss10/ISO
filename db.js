@@ -237,25 +237,115 @@ db.serialize(() => {
       const stmt = db.prepare(
         `INSERT INTO iso_27001_checklist (clausula, titulo) VALUES (?, ?)`
       );
+      
       const data27001 = [
-        ["A.5.1", "Políticas para la seguridad de la información"],
-        ["A.6.1", "Roles y responsabilidades de seguridad"],
-        ["A.7.1", "Verificación de antecedentes del personal"],
-        ["A.8.1", "Inventario de activos de información"],
-        ["A.9.1", "Política de control de acceso"],
-        ["A.10.1", "Controles criptográficos"],
-        ["A.11.1", "Protección física de instalaciones"],
-        ["A.12.1", "Procedimientos operativos documentados"],
-        ["A.13.1", "Gestión y seguridad de la red"],
-        ["A.14.1", "Requisitos de seguridad en proyectos"],
-        ["A.15.1", "Acuerdos de seguridad con proveedores"],
-        ["A.16.1", "Gestión de incidentes de seguridad"],
-        ["A.17.1", "Planificación de la continuidad"],
-        ["A.18.1", "Cumplimiento de requisitos legales"],
+        // A.5 CONTROLES ORGANIZATIVOS (37 controles)
+        ["A5.1", "Políticas para la seguridad de la información"],
+        ["A5.2", "Roles y responsabilidades de seguridad"],
+        ["A5.3", "Separación de duties"],
+        ["A5.4", "Gestión de responsabilidades"],
+        ["A5.5", "Contacto con autoridades"],
+        ["A5.6", "Contacto con grupos de interés"],
+        ["A5.7", "Seguridad en la nube"],
+        ["A5.8", "Gestión de activos de información"],
+        ["A5.9", "Inventario de activos de información"],
+        ["A5.10", "Aceptación de activos de información"],
+        ["A5.11", "Devolución de activos"],
+        ["A5.12", "Clasificación de la información"],
+        ["A5.13", "Etiquetado de la información"],
+        ["A5.14", "Transferencia de información"],
+        ["A5.15", "Control de acceso"],
+        ["A5.16", "Gestión de identidades"],
+        ["A5.17", "Atributos de acceso"],
+        ["A5.18", "Derechos de acceso"],
+        ["A5.19", "Información en redes"],
+        ["A5.20", "Seguridad en servicios de red"],
+        ["A5.21", "Segregación de redes"],
+        ["A5.22", "Seguridad en servicios web"],
+        ["A5.23", "Filtrado de contenido"],
+        ["A5.24", "Política de criptografía"],
+        ["A5.25", "Gestión de claves criptográficas"],
+        ["A5.26", "Política de uso de sistemas"],
+        ["A5.27", "Restricciones en instalación de software"],
+        ["A5.28", "Gestión de vulnerabilidades técnicas"],
+        ["A5.29", "Restricciones de auditoría"],
+        ["A5.30", "Ciclo de vida del desarrollo seguro"],
+        ["A5.31", "Entornos de desarrollo seguros"],
+        ["A5.32", "Pruebas de seguridad en desarrollo"],
+        ["A5.33", "Gestión de datos de prueba"],
+        ["A5.34", "Protección de sistemas en operación"],
+        ["A5.35", "Gestión de capacidad"],
+        ["A5.36", "Protección contra malware"],
+        ["A5.37", "Copias de seguridad"],
+        
+        // A.6 CONTROLES DE PERSONAS (8 controles)
+        ["A6.1", "Verificación de antecedentes"],
+        ["A6.2", "Términos y condiciones de empleo"],
+        ["A6.3", "Concienciación y formación en seguridad"],
+        ["A6.4", "Proceso disciplinario"],
+        ["A6.5", "Responsabilidades después del empleo"],
+        ["A6.6", "Confidencialidad y acuerdos de no divulgación"],
+        ["A6.7", "Trabajo remoto"],
+        ["A6.8", "Uso aceptable de activos de información"],
+        
+        // A.7 CONTROLES FÍSICOS (14 controles)
+        ["A7.1", "Perímetros de seguridad física"],
+        ["A7.2", "Controles de acceso físico"],
+        ["A7.3", "Oficinas, salas e instalaciones seguras"],
+        ["A7.4", "Protección contra amenazas ambientales"],
+        ["A7.5", "Trabajo en áreas seguras"],
+        ["A7.6", "Areas de carga y descarga"],
+        ["A7.7", "Equipamiento en ubicaciones seguras"],
+        ["A7.8", "Instalación y protección de cableado"],
+        ["A7.9", "Mantenimiento de equipos"],
+        ["A7.10", "Seguridad de equipos fuera de las instalaciones"],
+        ["A7.11", "Reutilización o retirada segura de equipos"],
+        ["A7.12", "Equipamiento de usuario sin supervisión"],
+        ["A7.13", "Política de puesto de trabajo limpio"],
+        ["A7.14", "Protection against physical and environmental threats"],
+        
+        // A.8 CONTROLES TECNOLÓGICOS (34 controles)
+        ["A8.1", "Inventario de activos de información"],
+        ["A8.2", "Política de control de acceso"],
+        ["A8.3", "Gestión de derechos de acceso"],
+        ["A8.4", "Información de acceso"],
+        ["A8.5", "Gestión de autenticación"],
+        ["A8.6", "Información de autenticación"],
+        ["A8.7", "Protección contra malware"],
+        ["A8.8", "Gestión de vulnerabilidades técnicas"],
+        ["A8.9", "Configuraciones de seguridad"],
+        ["A8.10", "Restricciones en instalación de software"],
+        ["A8.11", "Información en redes"],
+        ["A8.12", "Seguridad en servicios de red"],
+        ["A8.13", "Segregación de redes"],
+        ["A8.14", "Copias de seguridad"],
+        ["A8.15", "Registro de actividades (logging)"],
+        ["A8.16", "Monitorización de sistemas"],
+        ["A8.17", "Horarios de actividad"],
+        ["A8.18", "Relojes sincronizados"],
+        ["A8.19", "Privilegios de acceso a código fuente"],
+        ["A8.20", "Pruebas de seguridad en desarrollo"],
+        ["A8.21", "Entornos de desarrollo seguros"],
+        ["A8.22", "Gestión de datos de prueba"],
+        ["A8.23", "Protección de sistemas en operación"],
+        ["A8.24", "Controles criptográficos"],
+        ["A8.25", "Gestión de claves criptográficas"],
+        ["A8.26", "Política de uso de sistemas"],
+        ["A8.27", "Gestión de capacidad"],
+        ["A8.28", "Protección contra denegación de servicio"],
+        ["A8.29", "Seguridad en servicios web"],
+        ["A8.30", "Filtrado de contenido"],
+        ["A8.31", "Cifrado en redes"],
+        ["A8.32", "Gestión de eventos de seguridad"],
+        ["A8.33", "Uso de herramientas de auditoría"],
+        ["A8.34", "Información de sesión"]
       ];
+      
       data27001.forEach((item) => stmt.run(item[0], item[1]));
       stmt.finalize();
-      console.log("✅ Datos iniciales de ISO 27001 insertados correctamente");
+      console.log(`✅ ${data27001.length} controles ISO 27001 insertados correctamente`);
+    } else {
+      console.log(`ℹ️ Ya existen ${row.count} controles en la base de datos`);
     }
   });
 
@@ -1475,7 +1565,7 @@ db.get("SELECT COUNT(*) AS count FROM plantillas_27001", (err, row) => {
     // Datos para las plantillas ISO 27001
     const plantillasData27001 = [
       [
-        "A.5.1", 
+        "A5.1", 
         "Políticas de Seguridad", 
         "Plantilla para establecer políticas de seguridad de la información",
         "./plantillas/iso27001/A.5.1_Politicas_Seguridad.xlsx",

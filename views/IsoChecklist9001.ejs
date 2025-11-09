@@ -73,7 +73,18 @@
     }
   </style>
 </head>
-<body class="min-h-screen bg-gray-50">
+<body class="min-h-screen" style="
+  background: 
+    linear-gradient(135deg, 
+      rgba(255, 255, 255, 0.7) 0%, 
+      rgba(255, 255, 255, 0.6) 50%,
+      rgba(255, 255, 255, 0.7) 100%),
+    url('https://images.unsplash.com/photo-1552664730-d307ca884978?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+">
   <!-- Loading indicator para generación de PDF -->
   <div class="pdf-loading" id="pdf-loading">
     <div class="spinner"></div>
@@ -129,8 +140,8 @@
         </div>
         <div>
           <h1 class="text-4xl font-bold text-gray-900">Checklist ISO 9001:2015</h1>
-          <p class="text-gray-600 text-lg">Sistema de Gestión de Calidad</p>
-          <p class="text-sm text-gray-500 mt-1" id="current-date"></p>
+          <p class="text-gray-700 text-lg">Sistema de Gestión de Calidad</p>
+          <p class="text-sm text-gray-800 mt-1" id="current-date"></p>
         </div>
       </div>
     </div>

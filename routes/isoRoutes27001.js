@@ -83,13 +83,20 @@ router.post('/registro-iso-27001', (req, res) => {
 });
 
 
-// POST - Guardar checklist ISO 27001
+// POST - Guardar checklist ISO 27001 - VERSIÓN CORREGIDA
+// POST - Guardar checklist ISO 27001 - VERSIÓN CORREGIDA
 router.post('/guardar-checklist-27001', isAuthenticated, (req, res) => {
   const { empresa_id, resultados } = req.body;
 
   if (!empresa_id || !resultados || !Array.isArray(resultados)) {
     console.error("❌ Datos incompletos:", req.body);
     return res.status(400).json({ success: false, message: 'Datos incompletos' });
+  }
+
+  // Función para normalizar cláusulas - CONVIERTE "A.5.1" a "A5.1"
+  function normalizarClausula(clausula) {
+    // Convierte "A.5.1" a "A5.1"
+    return clausula.replace(/^A\.(\d+\.\d+)$/, 'A$1');
   }
 
   // Iniciar transacción
@@ -103,23 +110,55 @@ router.post('/guardar-checklist-27001', isAuthenticated, (req, res) => {
     }
 
     const clausulasMap = {};
-    clausulas.forEach(row => { clausulasMap[row.clausula] = row.id; });
+    clausulas.forEach(row => { 
+      clausulasMap[row.clausula] = row.id;
+    });
 
     let processed = 0;
     const total = resultados.length;
+    let hasError = false;
 
     if (total === 0) {
       db.run("COMMIT");
       return res.json({ success: true, message: 'No hay datos que guardar' });
     }
 
+    function handleError(error, message) {
+      if (!hasError) {
+        hasError = true;
+        db.run("ROLLBACK");
+        console.error("❌ Error:", error);
+        res.status(500).json({ success: false, message: message });
+      }
+    }
+
+    function checkCompletion() {
+      processed++;
+      if (processed === total && !hasError) {
+        db.run("COMMIT", (err) => {
+          if (err) {
+            console.error("❌ Error al hacer commit:", err);
+            return res.status(500).json({ success: false, message: 'Error al guardar checklist' });
+          }
+          console.log(`✅ Checklist ISO 27001 guardado para empresa ID:`, empresa_id);
+          res.json({ success: true, message: 'Checklist guardado correctamente' });
+        });
+      }
+    }
+
     resultados.forEach((resultado) => {
-      const { clausula, estado, observaciones } = resultado;
+      if (hasError) return;
+
+      let { clausula, estado, observaciones } = resultado;
+      
+      // NORMALIZAR LA CLÁUSULA - Esto es lo importante
+      clausula = normalizarClausula(clausula);
+      // console.log(`🔍 Cláusula normalizada: ${resultado.clausula} -> ${clausula}`);
+
       const checklistId = clausulasMap[clausula];
 
       if (!checklistId) {
-        db.run("ROLLBACK");
-        return res.status(400).json({ success: false, message: `Cláusula no encontrada: ${clausula}` });
+        return handleError(null, `Cláusula no encontrada: ${clausula} (original: ${resultado.clausula})`);
       }
 
       db.get(
@@ -127,9 +166,7 @@ router.post('/guardar-checklist-27001', isAuthenticated, (req, res) => {
         [empresa_id, checklistId],
         (err, existing) => {
           if (err) {
-            db.run("ROLLBACK");
-            console.error("❌ Error al verificar registro:", err);
-            return res.status(500).json({ success: false, message: 'Error al verificar datos' });
+            return handleError(err, 'Error al verificar datos');
           }
 
           if (existing) {
@@ -138,13 +175,10 @@ router.post('/guardar-checklist-27001', isAuthenticated, (req, res) => {
               "UPDATE audit_results_27001 SET estado = ?, observaciones = ?, fecha = CURRENT_TIMESTAMP WHERE empresa_id = ? AND checklist_id = ?",
               [estado, observaciones, empresa_id, checklistId],
               (err) => {
-                processed++;
                 if (err) {
-                  db.run("ROLLBACK");
-                  console.error("❌ Error al actualizar:", err);
-                  return res.status(500).json({ success: false, message: 'Error al actualizar datos' });
+                  return handleError(err, 'Error al actualizar datos');
                 }
-                if (processed === total) finalizeTransaction(res, empresa_id, '27001');
+                checkCompletion();
               }
             );
           } else {
@@ -153,31 +187,16 @@ router.post('/guardar-checklist-27001', isAuthenticated, (req, res) => {
               "INSERT INTO audit_results_27001 (empresa_id, checklist_id, estado, observaciones, fecha) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)",
               [empresa_id, checklistId, estado, observaciones],
               (err) => {
-                processed++;
                 if (err) {
-                  db.run("ROLLBACK");
-                  console.error("❌ Error al insertar:", err);
-                  return res.status(500).json({ success: false, message: 'Error al insertar datos' });
+                  return handleError(err, 'Error al insertar datos');
                 }
-                if (processed === total) finalizeTransaction(res, empresa_id, '27001');
+                checkCompletion();
               }
             );
           }
         }
       );
     });
-
-    function finalizeTransaction(res, empresa_id, norma) {
-      db.run("COMMIT", (err) => {
-        if (err) {
-          db.run("ROLLBACK");
-          console.error("❌ Error al hacer commit:", err);
-          return res.status(500).json({ success: false, message: 'Error al guardar checklist' });
-        }
-        console.log(`✅ Checklist ISO ${norma} guardado para empresa ID:`, empresa_id);
-        res.json({ success: true, message: 'Checklist guardado correctamente' });
-      });
-    }
   });
 });
 
